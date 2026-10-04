@@ -99,7 +99,7 @@ UkiUkiCore は、これらのボードを Arduino IDE で開発するための�
 1. Arduino IDE の **ファイル > 基本設定 > 追加のボードマネージャの URL** に以下を追加します。
 
    ```
-   https://ws-asahi.github.io/UkiUkiCore/package_ukiuki_index.json
+   https://project-unicollabo.github.io/UkiUkiCore/package_ukiuki_index.json
    ```
 
 2. **ツール > ボード > ボードマネージャ** で「**UkiUkiCore**」を検索してインストールします。

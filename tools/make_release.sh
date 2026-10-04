@@ -19,7 +19,7 @@
 #       (the URL in the index points at
 #        releases/download/v<ver>/UkiUkiCore-<ver>.tar.bz2)
 #    4. Push main; GitHub Pages (docs/) serves the index at
-#       https://ws-asahi.github.io/UkiUkiCore/package_ukiuki_index.json
+#       https://project-unicollabo.github.io/UkiUkiCore/package_ukiuki_index.json
 #
 #  NOTE: toolsDependencies (avr-gcc 15.2.0-wazamono2 / avrdude 8.1-wazamono2)
 #  are downloaded from ws-asahi/wazamono-toolchain releases - shared with
@@ -84,7 +84,7 @@ else:
     p = copy.deepcopy(plats[0])   # newest entry is the template (boards, toolsDependencies, ...)
     plats.insert(0, p)
 p["version"] = ver
-p["url"] = f"https://github.com/ws-asahi/UkiUkiCore/releases/download/v{ver}/UkiUkiCore-{ver}.tar.bz2"
+p["url"] = f"https://github.com/project-unicollabo/UkiUkiCore/releases/download/v{ver}/UkiUkiCore-{ver}.tar.bz2"
 p["archiveFileName"] = f"UkiUkiCore-{ver}.tar.bz2"
 p["checksum"] = f"SHA-256:{sha}"
 p["size"] = size
