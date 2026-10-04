@@ -3,10 +3,10 @@
     {
       "name": "UkiUkiCore",
       "maintainer": "Unicollabo",
-      "websiteURL": "https://github.com/ws-asahi/UkiUkiCore",
+      "websiteURL": "https://github.com/project-unicollabo/UkiUkiCore",
       "email": "asahi.00@ws-asahi.net",
       "help": {
-        "online": "https://github.com/ws-asahi/UkiUkiCore"
+        "online": "https://github.com/project-unicollabo/UkiUkiCore"
       },
       "platforms": [
         {
@@ -15,9 +15,9 @@
           "version": "0.0.5",
           "category": "Contributed",
           "help": {
-            "online": "https://github.com/ws-asahi/UkiUkiCore"
+            "online": "https://github.com/project-unicollabo/UkiUkiCore"
           },
-          "url": "https://github.com/ws-asahi/UkiUkiCore/releases/download/v0.0.5/UkiUkiCore-0.0.5.tar.bz2",
+          "url": "https://github.com/project-unicollabo/UkiUkiCore/releases/download/v0.0.5/UkiUkiCore-0.0.5.tar.bz2",
           "archiveFileName": "UkiUkiCore-0.0.5.tar.bz2",
           "checksum": "SHA-256:0862d20b46997a075bb3f8e8552f0b6beaa4874616cf193962dbead55011f6ae",
           "size": "3815703",
@@ -48,9 +48,9 @@
           "version": "0.0.4",
           "category": "Contributed",
           "help": {
-            "online": "https://github.com/ws-asahi/UkiUkiCore"
+            "online": "https://github.com/project-unicollabo/UkiUkiCore"
           },
-          "url": "https://github.com/ws-asahi/UkiUkiCore/releases/download/v0.0.4/UkiUkiCore-0.0.4.tar.bz2",
+          "url": "https://github.com/project-unicollabo/UkiUkiCore/releases/download/v0.0.4/UkiUkiCore-0.0.4.tar.bz2",
           "archiveFileName": "UkiUkiCore-0.0.4.tar.bz2",
           "checksum": "SHA-256:10322e350480edd5513c7c5131da60a7d7ff7f6ef32698a2264b6cbd156f54bb",
           "size": "3708154",
