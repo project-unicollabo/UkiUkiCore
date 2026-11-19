@@ -1,15 +1,15 @@
 # UkiUkiCore - Compile Examples
 #
-# Lean regression CI for the UkiUkiduino (the only board in this core).
-# Follows the WazamonoCore approach: one compile workflow, no lint/format/
-# spell side-jobs.
+# Lean regression CI for the UkiUkiduino boards (UkiUkiduino / UkiUkiduino
+# Pony). Follows the WazamonoCore approach: one compile workflow, no
+# lint/format/spell side-jobs.
 #
 # How it works:
-#   1. The Wazamono package index installs the WazamonoCore toolchain
-#      (avr-gcc 15.2.0-wazamono1, avrdude 8.1-wazamono1) + the released
-#      platform, so ctags and other builtin tools are also pulled in.
-#      (UkiUkiCore shares the wazamono toolchain; it has no package index
-#      of its own yet.)
+#   1. The Wazamono package index installs the wazamono toolchain (avr-gcc /
+#      avrdude) + the released WazamonoCore platform, so ctags and other
+#      builtin tools are also pulled in. UkiUkiCore uses the same toolchain
+#      release; platform.txt pins its exact version, so the WazamonoCore
+#      release in that index must list the same one.
 #   2. `source-path: megaavr` then overlays the checked-out working tree on
 #      top, so the examples are compiled against the code in this commit/PR.
 #      The overlay keeps the installed platform name, so the FQBN vendor in
@@ -41,14 +41,39 @@ jobs:
   compile-examples:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The Clock menu offers 24/20/16/12 MHz internal on both boards
+          # (24internal is the default). usbeps defaults to the first entry
+          # (ep8), so both endpoint variants are spelled out explicitly; the
+          # ep16 build (USB_EP_SLOTS=16) is covered once, on the UkiUkiduino.
+          - board: "UkiUkiduino"
+            fqbn: "WazamonoCore:megaavr:ukiukiduino:clock=24internal,usbeps=ep8"
+          - board: "UkiUkiduino (16 EP)"
+            fqbn: "WazamonoCore:megaavr:ukiukiduino:clock=24internal,usbeps=ep16"
+          - board: "UkiUkiduino Pony"
+            fqbn: "WazamonoCore:megaavr:ukiukiduinopony:clock=24internal,usbeps=ep8"
+          # Clock menu coverage: each non-default clock is compiled once, to
+          # keep the matrix small. USB stays available down to 12 MHz
+          # (CLK_PER >= 12 MHz per DS40002548B 28.3.1.1); the on-board WS2812
+          # driver has a separate timing table per clock.
+          - board: "UkiUkiduino (20 MHz)"
+            fqbn: "WazamonoCore:megaavr:ukiukiduino:clock=20internal,usbeps=ep8"
+          - board: "UkiUkiduino Pony (16 MHz)"
+            fqbn: "WazamonoCore:megaavr:ukiukiduinopony:clock=16internal,usbeps=ep8"
+          - board: "UkiUkiduino (12 MHz)"
+            fqbn: "WazamonoCore:megaavr:ukiukiduino:clock=12internal,usbeps=ep8"
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Compile examples (UkiUkiduino)
+      - name: Compile examples (${{ matrix.board }})
         uses: arduino/compile-sketches@v1
         with:
-          fqbn: "WazamonoCore:megaavr:ukiukiduino"
+          fqbn: ${{ matrix.fqbn }}
           sketch-paths: |
             - megaavr/libraries/EEPROM/examples
             - megaavr/libraries/USERSIG/examples
@@ -58,6 +83,7 @@ jobs:
             - megaavr/libraries/AnalogComp/examples
             - megaavr/libraries/Wire/examples
             - megaavr/libraries/SPI/examples
+            - megaavr/libraries/Ethernet/examples
             - megaavr/libraries/Servo/examples
             - megaavr/libraries/tinyNeoPixel_Static/examples
             - megaavr/libraries/SoftwareSerial/examples
