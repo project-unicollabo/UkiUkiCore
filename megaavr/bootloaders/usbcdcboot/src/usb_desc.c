@@ -150,11 +150,12 @@ const uint8_t g_bl_string_manufacturer[] = {
 };
 const uint8_t g_bl_string_manufacturer_len = sizeof(g_bl_string_manufacturer);
 
-#if defined(BL_BOARD_UKIUKIMICRO)
-/* Product "UkiUkimicro Bootloader" - 22 ASCII chars */
+#if defined(BL_BOARD_UKIUKIDUINO_PONY)
+/* Product "UkiUkiduino Pony Bootloader" - 27 ASCII chars */
 const uint8_t g_bl_string_product[] = {
-    2 + 2*22, DESC_TYPE_STRING,
-    'U',0, 'k',0, 'i',0, 'U',0, 'k',0, 'i',0, 'm',0, 'i',0, 'c',0, 'r',0, 'o',0, ' ',0,
+    2 + 2*27, DESC_TYPE_STRING,
+    'U',0, 'k',0, 'i',0, 'U',0, 'k',0, 'i',0, 'd',0, 'u',0, 'i',0, 'n',0, 'o',0, ' ',0,
+    'P',0, 'o',0, 'n',0, 'y',0, ' ',0,
     'B',0, 'o',0, 'o',0, 't',0, 'l',0, 'o',0, 'a',0, 'd',0, 'e',0, 'r',0
 };
 #else

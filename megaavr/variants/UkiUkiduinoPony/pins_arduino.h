@@ -1,11 +1,11 @@
-/* pins_arduino.h - Variant definition for the UkiUkimicro (AVR64DU32)
+/* pins_arduino.h - Variant definition for the UkiUkiduino Pony (AVR64DU32)
  * ---------------------------------------------------------------------------
  * Part of UkiUkiCore (a product-specific fork of WazamonoCore / SpenceKonde's
- * DxCore; the pin map follows the UkiUkimicro variant).
+ * DxCore; the pin map follows the UkiUkiduino Pony variant).
  * DxCore is (C) Spence Konde 2021-2022, open source (LGPL 2.1, see LICENSE.md),
  * based on existing Arduino cores. This variant (C) Workshop Asahi 2026.
  *
- * Board   : UkiUkimicro (Pro Micro form factor, AVR64DU32, USB-C;
+ * Board   : UkiUkiduino Pony (Pro Micro form factor, AVR64DU32, USB-C;
  *           official fan goods of the VTuber Yuniko Ukiuki). Derived from the
  *           Wazamono Tachi rev.5 layout with the UkiUkiduino on-board user
  *           button and full-color LED added, and the regulator removed
@@ -17,7 +17,7 @@
  *           PA0/PA1 (the XTALHF pads) carry the TX/RX activity LEDs.
  *
  *  ===== Pin numbering: Pro Micro compatible (NONCANONICAL) =====
- *  (source: UkiUkimicro.net + UkiUkimicro_ProMicro互換用ピン構成.csv)
+ *  (source: UkiUkiduinoPony.net + UkiUkiduinoPony_ProMicro互換用ピン構成.csv)
  *   D#   MCU   Pro Micro role / notes                          A#,  AIN
  *   D0   PA5   RX  (Serial1 = USART0 RX, ALT1)                 A11, AIN25
  *   D1   PA4   TX  (Serial1 = USART0 TX, ALT1)                 A12, AIN24
@@ -92,7 +92,7 @@
  *            ~330 us (300 us latch guard + 24 us frame).
  *            TX/RX activity LEDs: PA0 (D30) / PA1 (D31), active-LOW (anode to
  *            +5V via 1 kOhm), driven from the USB-CDC hooks
- *            (ukiukimicro_init.cpp), Pro Micro convention.
+ *            (ukiukiduinopony_init.cpp), Pro Micro convention.
  *   BUTTON-> BTN_BUILTIN = D32 (PF0). Same number on every UkiUkiduino board. 5.1 kOhm pull-down on the board;
  *            pressed = HIGH. Use pinMode(BTN_BUILTIN, INPUT) - no pullup needed.
  *   Serial-> native USB CDC (USBSerial), Leonardo/Micro convention.
@@ -107,20 +107,20 @@
 #include <avr/pgmspace.h>
 #include "timers.h"
 
-/* Board identification: ARDUINO_AVR_UKIUKIMICRO is THE macro that
- * identifies this board (boards.txt build.board=AVR_UKIUKIMICRO ->
- * -DARDUINO_AVR_UKIUKIMICRO); the fallback below covers builds
+/* Board identification: ARDUINO_AVR_UKIUKIDUINO_PONY is THE macro that
+ * identifies this board (boards.txt build.board=AVR_UKIUKIDUINO_PONY ->
+ * -DARDUINO_AVR_UKIUKIDUINO_PONY); the fallback below covers builds
  * outside the IDE. UKIUKIDUINO_PINOUT is shared with the Uno-form UkiUkiduino
  * and marks "a board with the UkiUkiduino LED/button feature set";
- * UKIUKIMICRO_PINOUT selects the ProMicro-specific implementation
- * files (ukiukimicro_init.cpp / ukiukimicro_led.cpp).
+ * UKIUKIDUINO_PONY_PINOUT selects the ProMicro-specific implementation
+ * files (ukiukiduinopony_init.cpp / ukiukiduinopony_led.cpp).
  * MCU identification comes from the compiler (-mmcu): __AVR_AVR64DU32__. */
-#ifndef ARDUINO_AVR_UKIUKIMICRO
-  #define ARDUINO_AVR_UKIUKIMICRO 1
+#ifndef ARDUINO_AVR_UKIUKIDUINO_PONY
+  #define ARDUINO_AVR_UKIUKIDUINO_PONY 1
 #endif
 #define DU_32PIN_PINOUT
 #define UKIUKIDUINO_PINOUT            /* UkiUkiduino family (LED_BUILTIN mirror + setBLEDColor + BTN_BUILTIN) */
-#define UKIUKIMICRO_PINOUT   /* this board's variant sources */
+#define UKIUKIDUINO_PONY_PINOUT   /* this board's variant sources */
 #define NONCANONICAL_PIN_NUMBERS
 
 /* ---- User-facing serial names (core support in UART0.cpp / UART1.cpp /
@@ -180,7 +180,7 @@
  * xxLED1 = ON, xxLED0 = OFF (both LEDs are active-LOW on this board too;
  * TX = PA0/D30, RX = PA1/D31). OUT is set HIGH (= off) before DIR so the
  * LEDs cannot flash on. The core's own CDC activity one-shot
- * (ukiukimicro_init.cpp) drives the same pins. */
+ * (ukiukiduinopony_init.cpp) drives the same pins. */
 #define TX_RX_LED_INIT                 (PORTA.OUTSET = (PIN0_bm | PIN1_bm), \
                                         PORTA.DIRSET = (PIN0_bm | PIN1_bm))
 #define TXLED1                         (PORTA.OUTCLR = PIN0_bm)   /* TX LED (PA0/D30) ON  */
@@ -193,7 +193,7 @@
  * which reads the RESULTING PF5 OUT bit (so HIGH/LOW/CHANGE all mirror
  * correctly) and sends the matching WS2812 frame on PF4: HIGH = lit in the
  * current color (default: yellow), LOW = off. Implemented in
- * ukiukimicro_led.cpp. Direct register writes are NOT mirrored.
+ * ukiukiduinopony_led.cpp. Direct register writes are NOT mirrored.
  * TIMING: each mirrored write busy-waits the WS2812 frame-latch time
  * (RES >= 80 us per the XL-5050RGBC-WS2812B datasheet; 300 us used) and then
  * streams the 24-bit frame with interrupts briefly disabled (~24 us).
@@ -665,9 +665,9 @@ static const uint8_t A19  = PIN_A19;
  *  USBCON enables Arduino's HID / Keyboard / Mouse / etc. on this board.
  *  NOTE: the native USB-CDC descriptor's VID/PID/product string are taken
  *  from cores/dxcore/usb_descriptors.{h,c} (selected there by the
- *  ARDUINO_AVR_UKIUKIMICRO macro), so the values below are
+ *  ARDUINO_AVR_UKIUKIDUINO_PONY macro), so the values below are
  *  informational only - keep them in sync.
- *  Effective app identity: 0x1209:0x000E, product "UkiUkimicro".
+ *  Effective app identity: 0x1209:0x000E, product "UkiUkiduino Pony".
  *  These are pid.codes TEST-range placeholders; obtain a real product
  *  VID/PID before release.
  */
@@ -684,7 +684,7 @@ static const uint8_t A19  = PIN_A19;
   #define USB_MANUFACTURER       "Workshop Asahi"
 #endif
 #ifndef USB_PRODUCT
-  #define USB_PRODUCT            "UkiUkimicro"
+  #define USB_PRODUCT            "UkiUkiduino Pony"
 #endif
 
 /* =================================================================

@@ -1,4 +1,4 @@
-/* ukiukimicro_led.cpp - on-board WS2812B LED driver for the UkiUkimicro
+/* ukiukiduinopony_led.cpp - on-board WS2812B LED driver for the UkiUkiduino Pony
  * ---------------------------------------------------------------------------
  * Part of UkiUkiCore (a product-specific fork of WazamonoCore / SpenceKonde's
  * DxCore). (C) Workshop Asahi 2026. DxCore is (C) Spence Konde, LGPL 2.1
@@ -57,7 +57,7 @@
 
 #include <Arduino.h>
 
-#if defined(UKIUKIMICRO_PINOUT)
+#if defined(UKIUKIDUINO_PONY_PINOUT)
 
 /* Per-F_CPU loop constants (see the timing table in the header):
  *   WS_NA = H0 - 2       nops between SBI and SBRS
@@ -80,7 +80,7 @@
   #define WS_NB 2
   #define WS_NC 1
 #else
-  #error "ukiukimicro_led.cpp: no WS2812B bit timing for this F_CPU (supported: 12/16/20/24 MHz)."
+  #error "ukiukiduinopony_led.cpp: no WS2812B bit timing for this F_CPU (supported: 12/16/20/24 MHz)."
 #endif
 
 /* ---- NOP string builders (n = 0..12) ----------------------------------- */
@@ -197,4 +197,4 @@ void setBLEDColor(LEDColorName color, uint8_t brightness) {
   setBLEDColor(scale8(r, brightness), scale8(g, brightness), scale8(b, brightness));
 }
 
-#endif /* UKIUKIMICRO_PINOUT */
+#endif /* UKIUKIDUINO_PONY_PINOUT */

@@ -2,7 +2,7 @@
  * wdt_compat.h - Pro Micro / classic-AVR <avr/wdt.h> compatibility for AVR DU
  * --------------------------------------------------------------------------
  *  WazamonoCore addition, carried into UkiUkiCore.  UkiUkiduino (Uno R3) and
- *  UkiUkimicro (Pro Micro) aim for high source-level compatibility with the
+ *  UkiUkiduino Pony (Pro Micro) aim for high source-level compatibility with the
  *  ATmega328P / ATmega32U4 originals, so classic-AVR watchdog code should
  *  build and behave identically with no edits:
  *
