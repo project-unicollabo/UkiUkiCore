@@ -1,0 +1,33 @@
+物理ピン番号(TQFP32),MCUピン名,Arduinoピン名,サブピン名,ADCチャネル,USART,通信,PWM,CCL,AC0,EVSYS,変更不可,備考
+1,PA3,D3,A14,AIN23,-,I2C SCL,TCB1,-,-,-,-,Wire(I2C)+PWM
+2,PA4,D1,A12,AIN24,USART0 TxD,-,-,-,-,-,-,Serial1+SPI1
+3,PA5,D0,A11,AIN25,USART0 RxD,-,-,-,-,-,-,Serial1+SPI1
+4,PA6,D7,A16,AIN26,USART0 XCK,-,TCB1+LUT0,CCL(LUT0-OUT),-,-,-,Serial1+SPI1+PWM
+5,PA7,D8,A8,AIN27,USART0 XDIR,-,-,-,OUT,EVOUTA,CLKOUT,Serial1+AnalogComp+EventSystem
+6,VUSB,-,-,-,-,-,-,-,-,-,USB電源,VUSBドメイン電源入力
+7,DM,-,-,-,-,-,-,-,-,-,USB D−,USB2.0 Full-Speed データライン
+8,DP,-,-,-,-,-,-,-,-,-,USB D+,USB2.0 Full-Speed データライン
+9,PC3,D4,A6,AIN31,-,-,TCB1+LUT1,CCL(LUT1-OUT),-,-,-,PWM
+10,PD0,D5,A15,AIN0,-,-,PWM(TCA0),CCL(LUT2-IN0),-,-,-,CustomLogic+PWM
+11,PD1,D6,A7,AIN1,-,-,PWM(TCA0),CCL(LUT2-IN1),-,-,-,CustomLogic+PWM
+12,PD2,D9,A9,AIN2,-,-,PWM(TCA0),CCL(LUT2-IN2),AINP0,EVOUTD,-,CustomLogic+PWM+AnalogComp+EventSystem
+13,PD3,D10,A10,AIN3,-,-,PWM(TCA0),CCL(LUT2-OUT),AINN0,-,-,CustomLogic+PWM+AnalogComp
+14,PD4,D16,A19,AIN4,-,SPI MOSI,PWM(TCA0),-,-,-,-,SPI+PWM
+15,PD5,D14,A17,AIN5,-,SPI MISO,PWM(TCA0),-,-,-,-,SPI+PWM
+16,PD6,D15,A18,AIN6,USART1 TxD,SPI CLK,-,-,-,-,-,SPI+Serial2
+17,PD7,A0,D18,AIN7,USART1 RxD,SPI SS,-,-,-,-,AREF,SPI+Serial2+AREF
+18,VDD,-,-,-,-,-,-,-,-,-,+5V電源,デジタル電源
+19,GND,-,-,-,-,-,-,-,-,-,GND,グランド
+20,PF0,A1,D19,AIN16,-,-,-,CCL(LUT3-IN0),-,-,-,CustomLogic1
+21,PF1,A2,D20,AIN17,-,-,-,CCL(LUT3-IN1),-,-,-,CustomLogic1
+22,PF2,A3,D21,AIN18,-,-,-,CCL(LUT3-IN2),-,EVOUTF,-,CustomLogic1+EventSystem
+23,PF3,D17,A20,AIN19,-,-,-,CCL(LUT3-OUT),-,-,-,CustomLogic1+LED_BUILTIN
+24,PF4,-,-,AIN20,-,-,-,-,-,-,-,
+25,PF5,-,-,AIN21,-,-,-,-,-,-,-,
+26,PF6,RESET,-,-,-,-,-,-,-,-,RESET,入力専用リセットピン
+27,PF7,UPDI,-,-,-,-,-,-,-,-,UPDI,ファームウェア書き込み・デバッグ専用
+28,VDD,-,-,-,-,-,-,-,-,-,+5V電源,デジタル電源
+29,GND,-,-,-,-,-,-,-,-,-,GND,グランド
+30,PA0,(D17),-,-,-,-,-,-,-,-,-,LED_BUILTIN（ユーザーLED）/D17のIOに連動
+31,PA1,D32,-,-,-,-,-,-,-,-,-,BTN_BUILTIN（ユーザーボタン）
+32,PA2,D2,A13,AIN22,-,I2C SDA,-,-,-,-,-,Wire(I2C)
