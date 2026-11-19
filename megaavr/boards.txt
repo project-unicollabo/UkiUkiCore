@@ -26,7 +26,7 @@ menu.usbeps=USB Endpoints
 
 ukiukiduino.name=UkiUkiduino
 
-ukiukiduino.upload.tool=avrdude
+ukiukiduino.upload.tool=wzavrdude
 ukiukiduino.upload.prog_interlock=
 # --- USB identity: pid.codes TEST-range placeholders (app 0x000C / boot 0x000B).
 #     Replace with the official pid.codes VID/PID before release. Keep in sync
@@ -55,7 +55,7 @@ ukiukiduino.build.export_merged_output=false
 ukiukiduino.build.printf=
 ukiukiduino.build.flmapopts=
 ukiukiduino.build.attachmode=-DCORE_ATTACH_ALL
-ukiukiduino.bootloader.tool=avrdude
+ukiukiduino.bootloader.tool=wzavrdude
 ukiukiduino.bootloader.WDTCFG=0b{bootloader.wdtwindowbits}{bootloader.wdttimeoutbits}
 ukiukiduino.bootloader.wdtwindowbits=0000
 ukiukiduino.bootloader.BODCFG=0x00
@@ -132,7 +132,7 @@ ukiukiduino.bootloader.class=usbcdcboot_ukiukiduino
 #  D5/D6/D9/D10 (+ D14/D16).
 ukiukiduinopony.name=UkiUkiduino Pony
 
-ukiukiduinopony.upload.tool=avrdude
+ukiukiduinopony.upload.tool=wzavrdude
 ukiukiduinopony.upload.prog_interlock=
 # --- USB identity: pid.codes TEST-range placeholders (app 0x000E / boot 0x000D;
 #     distinct from the Uno-form UkiUkiduino so both can be plugged in at once).
@@ -162,7 +162,7 @@ ukiukiduinopony.build.export_merged_output=false
 ukiukiduinopony.build.printf=
 ukiukiduinopony.build.flmapopts=
 ukiukiduinopony.build.attachmode=-DCORE_ATTACH_ALL
-ukiukiduinopony.bootloader.tool=avrdude
+ukiukiduinopony.bootloader.tool=wzavrdude
 ukiukiduinopony.bootloader.WDTCFG=0b{bootloader.wdtwindowbits}{bootloader.wdttimeoutbits}
 ukiukiduinopony.bootloader.wdtwindowbits=0000
 ukiukiduinopony.bootloader.BODCFG=0x00

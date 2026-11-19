@@ -83,6 +83,15 @@ WazamonoCore の修正・追加を取り込みました（4fa7dcb8 / cd6915fc / 
   そのまま使えます。診断用に `usbCdcSuspended()` と、variant 用の weak フック
   `usb_cdc_on_bus_suspend()` を追加（UkiUkiduino / Pony は TX/RX LED が無いので未使用）。
 
+### ツール
+
+- **書き込みツールの定義名を `avrdude` から `wzavrdude` に変更**（`platform.txt`、`boards.txt`、
+  `programmers.txt`、WazamonoCore 72b152d6 と同じ対処）。Arduino 公式 AVR ボードが入れる
+  `avrdude` と名前が重なると、IDE / arduino-cli 側でインストール済みの同名ツールのパスが
+  優先される場合があるためです。実行される avrdude 本体（8.1-wazamono2）と書き込みコマンドは
+  変わりません。`boards.local.txt` などで `upload.tool=avrdude` を指定している場合は
+  `wzavrdude` に書き換えてください。
+
 ### ドキュメント・サンプル
 
 - `megaavr/extras/UkiUkiduinoPony.md` を基板 Rev.0.2 の内容（ピン表・電源・LED / ボタン・主要部品）に更新。
