@@ -21,8 +21,12 @@ extern "C" {
  * Public API
  * ============================================================ */
 
-/* True when host has SET_CONFIGURATION and asserted DTR */
+/* True when the port is open for data: host has SET_CONFIGURATION and
+ * asserted DTR, and the bus is not suspended (cable pulled / host asleep).
+ * usbCdcWrite*() accept data only while this is true (Leonardo rule). */
 bool usbCdcReady(void);
+/* True while the bus is suspended (3 ms idle: cable pulled or host asleep). */
+bool usbCdcSuspended(void);
 bool usbCdcTxIdle(void);   /* TX ring empty AND no packet in flight */
 
 uint8_t usbCdcLineState(void);
@@ -83,12 +87,16 @@ void usb_cdc_on_reset(void);               /* Bus reset                */
 void usb_cdc_on_ep2_out(uint16_t cnt);     /* EP2 OUT TRNCOMPL         */
 void usb_cdc_on_ep3_in_done(void);         /* EP3 IN TRNCOMPL          */
 void usb_cdc_on_sof(void);                 /* SOF: idle TX flush (ZLP) */
+void usb_cdc_on_suspend(void);             /* Bus idle 3 ms (cable pulled / host asleep) */
+void usb_cdc_on_resume(void);              /* Bus activity after suspend */
 
 /* Activity-LED hooks - board-agnostic, weak no-op by default (usb_cdc.c).
  * A board variant may override these to drive RX/TX activity LEDs (ISR ctx). */
 void usb_cdc_on_rx_activity(void);         /* CDC OUT data received (host->dev) */
 void usb_cdc_on_tx_activity(void);         /* CDC IN data sent      (dev->host) */
 void usb_cdc_on_led_tick(void);            /* USB SOF, ~1 ms cadence            */
+void usb_cdc_on_bus_suspend(void);         /* Bus suspended: SOF ticks stop - put out
+                                            * any activity LED still in its pulse  */
 
 /* Call from main loop to drive the TX pump */
 void usbCdcPoll(void);

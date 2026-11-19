@@ -128,6 +128,23 @@ static volatile uint8_t g_tx_tail = 0;     /* read by USB stack  */
 static volatile bool g_tx_in_flight = false;  /* EP3 currently transmitting */
 static volatile bool g_tx_last_full = false;  /* last armed EP3 IN packet was exactly USB_EP3_SIZE */
 
+/* Bus suspended: set by the SUSPEND bus event (no bus activity for 3 ms -
+ * DS40002548B 28.4.10), which is what a self-powered board sees when the
+ * cable is pulled or the host sleeps, cleared by RESUME or a bus RESET.
+ * While set the port counts as closed: writes are dropped and the TX pump
+ * stays idle, so nothing can be queued towards a host that is not there. */
+static volatile bool g_bus_suspended = false;
+
+/* The port is open for data: enumerated, host holds DTR, bus not suspended.
+ * This is the 32U4 core's "_usbConfiguration && lineState > 0" test, plus
+ * the suspend term the DU needs because its USB macro keeps running without
+ * VBUS (internal regulator) where the 32U4's simply stops. */
+static inline bool cdc_port_open(void) {
+    return (g_current_configuration == 1)
+        && (g_control_line_state & CDC_CTRL_LINE_DTR)
+        && !g_bus_suspended;
+}
+
 /* ============================================================
  * 1200 bps touch-reset (Leonardo style)
  *
@@ -191,6 +208,7 @@ static void perform_1200bps_reset(void) {
 __attribute__((weak)) void usb_cdc_on_rx_activity(void) { }
 __attribute__((weak)) void usb_cdc_on_tx_activity(void) { }
 __attribute__((weak)) void usb_cdc_on_led_tick(void)    { }
+__attribute__((weak)) void usb_cdc_on_bus_suspend(void) { }
 
 void usb_cdc_on_ep2_out(uint16_t cnt) {
     if (cnt > USB_EP2_SIZE) cnt = USB_EP2_SIZE;
@@ -221,6 +239,7 @@ void usb_cdc_on_ep3_in_done(void) {
 static void cdc_tx_pump(void) {
     if (g_tx_in_flight) return;
     if (g_current_configuration != 1) return;
+    if (g_bus_suspended) return;             /* nobody is listening: keep EP3 NAK, LED dark */
 
     /* Endpoint must be NAK (= ready) before we touch CNT */
     if (!(g_ep_table.EP[3].IN.STATUS & USB_BUSNAK_bm)) return;
@@ -323,6 +342,7 @@ void usb_cdc_on_reset(void) {
     g_tx_head = g_tx_tail = 0;
     g_tx_in_flight = false;
     g_tx_last_full = false;
+    g_bus_suspended = false;                 /* a reset is bus activity by definition */
     g_control_line_state = 0;
     g_pending_set_line_coding = false;
 }
@@ -330,6 +350,47 @@ void usb_cdc_on_reset(void) {
 void usb_cdc_on_configured(void) {
     g_tx_in_flight = false;
     g_tx_last_full = false;
+}
+
+/* ============================================================
+ * Bus suspend / resume (BUSEVENT ISR)
+ *
+ * SUSPEND fires after 3 ms without bus activity. For a bus-powered board
+ * that only ever means "host asleep", but the Tsurugi/Tachi/Kunai run
+ * self-powered and the DU's USB macro keeps running without VBUS, so it is
+ * also the only signal we get when the cable is pulled. On the 32U4 the
+ * macro loses its supply with the cable and USB_Send() simply fails
+ * (250 ms timeout) before it reaches TXLED1 - that is why a Leonardo never
+ * leaves its TX LED lit. We get the same visible result explicitly:
+ *
+ *   - close the port (cdc_port_open() false): sketch writes are dropped
+ *     "just like with a UART" (CDC.cpp), the TX pump stays idle, Serial
+ *     reads false;
+ *   - discard what is queued and un-arm EP3: the SOF-driven LED tick has
+ *     stopped with the bus, so a packet loaded now would pin the LED on,
+ *     and after a resume the host should not receive stale output;
+ *   - usb_cdc_on_bus_suspend() lets the variant extinguish an activity
+ *     LED whose one-shot can no longer expire.
+ *
+ * DTR itself is kept: a host that merely slept still has the port open and
+ * continues on RESUME without re-sending SET_CONTROL_LINE_STATE (Windows
+ * does not). A cable re-plug arrives as a bus RESET, which clears all of it.
+ * ============================================================ */
+void usb_cdc_on_suspend(void) {
+    g_bus_suspended = true;
+    g_tx_head = g_tx_tail = 0;
+    g_tx_last_full = false;
+    if (g_tx_in_flight) {
+        /* Un-arm the packet sitting in EP3 IN (nobody will fetch it). */
+        while (USB0.INTFLAGSB & USB_RMWBUSY_bm) {}
+        USB0.STATUS[3].INSET = USB_BUSNAK_bm;
+        g_tx_in_flight = false;
+    }
+    usb_cdc_on_bus_suspend();
+}
+
+void usb_cdc_on_resume(void) {
+    g_bus_suspended = false;
 }
 
 /* ============================================================
@@ -428,8 +489,11 @@ void usb_cdc_data_out_complete(void) {
  * Public API
  * ============================================================ */
 bool usbCdcReady(void) {
-    return (g_current_configuration == 1)
-        && (g_control_line_state & CDC_CTRL_LINE_DTR);
+    return cdc_port_open();
+}
+
+bool usbCdcSuspended(void) {
+    return g_bus_suspended;
 }
 
 bool usbCdcTxReady(void) {
@@ -491,13 +555,23 @@ uint16_t usbCdcReadBytes(uint8_t *dst, uint16_t maxlen) {
     return n;
 }
 
+/* Writes are accepted only while the port is open (enumerated, DTR held by
+ * the host, bus not suspended) - the 32U4 core's Serial_::write() rule:
+ * "bytes sent before the user opens the connection or after the connection
+ * is closed are lost - just like with a UART" (CDC.cpp). Without this gate
+ * a sketch printing to an unopened or unplugged port loads a packet into
+ * EP3 that no host ever fetches, and the TX activity LED, lit when that
+ * packet is armed, stays on because the SOF tick that would expire it has
+ * stopped with the bus. */
 bool usbCdcWriteByte(uint8_t b) {
+    if (!cdc_port_open()) return false;
     if (!tx_ring_put(b)) return false;
     cdc_tx_kick();                   /* start TX now; ISR drives the rest */
     return true;
 }
 
 uint16_t usbCdcWrite(const uint8_t *src, uint16_t len) {
+    if (!cdc_port_open()) return 0;
     uint16_t n = 0;
     while (n < len && tx_ring_put(src[n])) n++;
     if (n) cdc_tx_kick();            /* one kick for the whole buffer */

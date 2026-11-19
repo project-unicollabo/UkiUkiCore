@@ -93,6 +93,8 @@ __attribute__((weak)) void usb_cdc_on_reset(void)       { }
 __attribute__((weak)) void usb_cdc_on_ep2_out(uint16_t cnt) { (void)cnt; }
 __attribute__((weak)) void usb_cdc_on_ep3_in_done(void) { }
 __attribute__((weak)) void usb_cdc_on_sof(void)         { }
+__attribute__((weak)) void usb_cdc_on_suspend(void)     { }
+__attribute__((weak)) void usb_cdc_on_resume(void)      { }
 
 /* ============================================================
  * Endpoint table initialization
@@ -358,7 +360,7 @@ static void handle_ep0_out_complete(void) {
  * Event service routines (invoked from the USB interrupt vectors)
  * ============================================================ */
 
-/* Bus events — currently just bus RESET (INTFLAGSA / USB0_BUSEVENT_vect). */
+/* Bus events — RESET, SOF, SUSPEND, RESUME (INTFLAGSA / USB0_BUSEVENT_vect). */
 static void usb_service_busevent(void) {
     uint8_t flags_a = USB0.INTFLAGSA;
     if (flags_a & USB_RESET_bm) {
@@ -369,6 +371,21 @@ static void usb_service_busevent(void) {
         g_pending_address       = 0;
         usb_cdc_on_reset();
         USB0.INTFLAGSA = USB_RESET_bm;
+    }
+    /* Suspend: 3 ms without bus activity (DS40002548B 28.4.10). On a
+     * self-powered board this is how a pulled cable shows up, since the DU's
+     * USB macro keeps running on the internal regulator without VBUS; it is
+     * also an ordinary host sleep. Resume: any non-idle state afterwards -
+     * a host waking up, or the bus reset of a re-plug (which then also runs
+     * the RESET branch above). Handled before SOF so a resume and its first
+     * SOF in the same ISR pass are applied in order. */
+    if (flags_a & USB_SUSPEND_bm) {
+        usb_cdc_on_suspend();
+        USB0.INTFLAGSA = USB_SUSPEND_bm;
+    }
+    if (flags_a & USB_RESUME_bm) {
+        usb_cdc_on_resume();
+        USB0.INTFLAGSA = USB_RESUME_bm;
     }
     /* Start-of-Frame (1 ms): drive the CDC idle-flush so a paused TX
      * stream that ended on a full 64-byte packet gets a terminating ZLP. */
@@ -438,7 +455,7 @@ static void usb_service_trncompl(void) {
  * usbPoll() from loop(). Retained as a no-op for source compatibility. */
 void usbPoll(void) { }
 
-/* Bus-event vector: RESET (and, in future, SUSPEND/RESUME). */
+/* Bus-event vector: RESET, SOF, SUSPEND, RESUME. */
 ISR(USB0_BUSEVENT_vect) {
     usb_service_busevent();
 }
@@ -512,7 +529,8 @@ void usbInit(void) {
 
     /* 6. Enable USB interrupts (interrupt-driven; loop() need not poll).
      *    INTCTRLA -> USB0_BUSEVENT_vect ; INTCTRLB -> USB0_TRNCOMPL_vect */
-    USB0.INTCTRLA = USB_RESET_bm | USB_SOF_bm;        /* bus reset + SOF      */
+    USB0.INTCTRLA = USB_RESET_bm | USB_SOF_bm
+                  | USB_SUSPEND_bm | USB_RESUME_bm;   /* bus reset + SOF + suspend/resume */
     USB0.INTCTRLB = USB_SETUP_bm | USB_TRNCOMPL_bm;   /* setup + trncompl     */
 
     /* 7. Enable USB peripheral; MAXEP in bits [3:0] */

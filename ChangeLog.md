@@ -66,6 +66,23 @@ WazamonoCore の修正・追加を取り込みました（4fa7dcb8 / cd6915fc / 
   変換中に呼ぶと `INT16_MIN` を返します。詳細は `megaavr/extras/Ref_Analog.md`。
   WazamonoCore での実測値を掲載しており、UkiUkiduino 実機での確認はこれからです。
 
+### USB CDC
+
+- **ポートが開いていない間の `Serial` への書き込みを捨てるようになりました**（`usb_cdc.c`、
+  WazamonoCore 25c3fbe9 の取り込み）。これまで `usbCdcWrite()` / `usbCdcWriteByte()` はポートの
+  状態に関係なくデータを受け取り、EP3 IN に積んでいました。今後は「列挙済み・ホストが DTR を
+  保持・バスがサスペンドしていない」ときだけ受け付け、それ以外は捨てます。ATmega32U4 コア
+  （Leonardo / Pro Micro）の `Serial_::write()` と同じ規則で、`if (Serial)` / `usbCdcReady()` も
+  同じ条件で判定します。**DTR を立てずにポートを開くホスト側ソフトでは受信できなくなる**点に
+  注意してください（Arduino IDE のシリアルモニタは DTR を立てます）。
+- **バスの SUSPEND / RESUME を処理するようになりました**（`usb_core.c`）。DC ジャックや VIN で
+  給電している場合、AVR DU の USB マクロはケーブルを抜いても内蔵レギュレータで動き続けるため、
+  3 ms のバス無通信（DS40002548B 28.4.10）がケーブル抜去を知る唯一の手がかりです。サスペンド時は
+  送信リングを破棄し、EP3 に積んだパケットを取り下げます。RESUME またはバスリセットで再開し、
+  DTR はホストのスリープをまたいで保持するので、開いたままのシリアルモニタは PC の復帰後も
+  そのまま使えます。診断用に `usbCdcSuspended()` と、variant 用の weak フック
+  `usb_cdc_on_bus_suspend()` を追加（UkiUkiduino / Pony は TX/RX LED が無いので未使用）。
+
 ### ドキュメント・サンプル
 
 - `megaavr/extras/UkiUkiduinoPony.md` を基板 Rev.0.2 の内容（ピン表・電源・LED / ボタン・主要部品）に更新。
