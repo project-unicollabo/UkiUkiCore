@@ -122,12 +122,14 @@ ukiukiduino.bootloader.class=usbcdcboot_ukiukiduino
 
 # =================  UkiUkiduino Pony (AVR64DU32)  =================
 #  Pro Micro form factor (derived from the Wazamono Tachi rev.5 layout).
-#  AVR64DU32 + USB-CDC bootloader, 5 V only (no regulator: RAW = VCC = +5V).
-#  On-board: WS2812B full-color LED (LED_BUILTIN = D17, mirrored from PF5 to
-#  PF4), user button BTN_BUILTIN = D22 (PF0, pull-down, pressed = HIGH),
-#  TX/RX activity LEDs on PA0/PA1 (active-LOW). Timer use: millis() on TCB0,
-#  TCB1 drives the exclusive D3/D4/D7 PWM outlet and tone(); TCA0 -> PORTD
-#  gives the classic Pro Micro PWM set D5/D6/D9/D10 (+ D14/D16).
+#  AVR64DU32 (VQFN) + USB-CDC bootloader, 5 V I/O. Power: USB, or the VIN pin
+#  (Pro Micro "RAW" position) through a Schottky diode + 5 V LDO.
+#  On-board: WS2812B full-color LED (LED_BUILTIN = D17, mirrored from the
+#  unconnected state pin PF3 to the data line on PA0), user button
+#  BTN_BUILTIN = D32 (PA1, pull-down, pressed = HIGH). No TX/RX activity LEDs.
+#  Timer use: millis() on TCB0, TCB1 drives the exclusive D3/D4/D7 PWM outlet
+#  and tone(); TCA0 -> PORTD gives the classic Pro Micro PWM set
+#  D5/D6/D9/D10 (+ D14/D16).
 ukiukiduinopony.name=UkiUkiduino Pony
 
 ukiukiduinopony.upload.tool=avrdude
@@ -152,8 +154,8 @@ ukiukiduinopony.menu.usbeps.ep8.build.usbepflags=
 ukiukiduinopony.menu.usbeps.ep16=16 (EP0-EP15, extended)
 ukiukiduinopony.menu.usbeps.ep16.build.usbepflags=-DUSB_EP_SLOTS=16
 # Force-link the variant init TU (variants/UkiUkiduinoPony/
-# ukiukiduinopony_init.cpp): strong initVariant() (LED blanking) plus the
-# USB-CDC TX/RX activity-LED hooks would otherwise be dropped from core.a.
+# ukiukiduinopony_init.cpp): the strong initVariant() (LED data pin setup and
+# LED blanking) would otherwise be dropped from core.a.
 ukiukiduinopony.compiler.c.elf.extra_flags=-Wl,-u,ukiukiduinopony_variant_keep -Wl,--defsym,__flmap_lock=1
 ukiukiduinopony.build.rodata_flags=
 ukiukiduinopony.build.export_merged_output=false

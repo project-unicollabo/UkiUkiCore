@@ -6,18 +6,25 @@
  * based on existing Arduino cores. This variant (C) Workshop Asahi 2026.
  *
  * Board   : UkiUkiduino Pony (Pro Micro form factor, AVR64DU32, USB-C;
- *           official fan goods of the VTuber Yuniko Ukiuki). Derived from the
- *           Wazamono Tachi rev.5 layout with the UkiUkiduino on-board user
- *           button and full-color LED added, and the regulator removed
- *           (the board is 5 V-only: RAW and VCC are both wired to +5V).
- * MCU     : AVR64DU32  (32-pin TQFP)
- * Clock   : internal OSCHF, 24 MHz fixed (no crystal on the board; boards.txt
+ *           official fan goods of the VTuber Yuniko Ukiuki). Hardware Rev.0.2:
+ *           the Wazamono Tachi rev.5 header layout with the UkiUkiduino
+ *           on-board user button and full-color LED. The LED data line and
+ *           the button sit on PA0 / PA1 - the same MCU pins as on the
+ *           Uno-form UkiUkiduino.
+ * MCU     : AVR64DU32  (32-pin VQFN, AVR64DU32-I/RXB; same pinout as the TQFP)
+ * Power   : +5V rail fed from USB VBUS through a CH213K ideal diode, or from
+ *           the VIN header pin (the Pro Micro "RAW" position) through a
+ *           B5819W Schottky diode and an SPX3819M5-L-5-0 5 V LDO. The header
+ *           pin at the Pro Micro "VCC" position is the +5V rail. All I/O is
+ *           5 V; VUSB (3.3 V) comes from the on-chip regulator.
+ * Clock   : internal OSCHF, 24 MHz default (no crystal on the board; boards.txt
  *           pins build.clocksource=0). USB CLK_USB (48 MHz) is produced by
  *           OSCHF + PLL48M and auto-tuned to the USB SOF.
- *           PA0/PA1 (the XTALHF pads) carry the TX/RX activity LEDs.
+ *           PA0/PA1 (the XTALHF pads) carry the LED data line and the button.
  *
  *  ===== Pin numbering: Pro Micro compatible (NONCANONICAL) =====
- *  (source: UkiUkiduinoPony.net + UkiUkiduinoPony_ProMicro互換用ピン構成.csv)
+ *  (source: hardware/UkiUkiduinoPony/UkiUkiduinoPony.net +
+ *           UkiUkiduinoPony_ProMicro互換用ピン構成.csv, Rev.0.2)
  *   D#   MCU   Pro Micro role / notes                          A#,  AIN
  *   D0   PA5   RX  (Serial1 = USART0 RX, ALT1)                 A11, AIN25
  *   D1   PA4   TX  (Serial1 = USART0 TX, ALT1)                 A12, AIN24
@@ -34,18 +41,19 @@
  *   D14  PD5   MISO | ~PWM(TCA0 WO5)                           A17, AIN5
  *   D15  PD6   SCK  | Serial2 TX (USART1 ALT2)                 A18, AIN6
  *   D16  PD4   MOSI | ~PWM(TCA0 WO4)                           A19, AIN4
- *   D17  PF5   LED_BUILTIN - state pin of the on-board WS2812B full-color
- *              LED (see LED below; no header, no ADC alias)
+ *   D17  PF3   LED_BUILTIN - state pin of the on-board WS2812B full-color
+ *              LED (see LED below). The MCU pin is NOT connected to
+ *              anything on the board (no header).              A20, AIN19
  *   D18  PD7   A0 | SPI SS | Serial2 RX (USART1 ALT2) | VREFA       AIN7
- *   D19  PF1   A1 | LUT3-IN1                                        AIN17
- *   D20  PF2   A2 | LUT3-IN2 | EVOUTF                               AIN18
- *   D21  PF3   A3 | LUT3-OUT                                        AIN19
- *   D22..D29   (do not exist - gap)
- *        PF4   WS2812B LED data-in (index 23; driven by the D17 software
+ *   D19  PF0   A1 | LUT3-IN0                                        AIN16
+ *   D20  PF1   A2 | LUT3-IN1                                        AIN17
+ *   D21  PF2   A3 | LUT3-IN2 | EVOUTF                               AIN18
+ *        PA0   WS2812B LED data-in (index 22; driven by the D17 software
  *              mirror - not a user pin, no Dn alias)
- *   D30  PA0   TX LED = LED_BUILTIN_TX (on-board, active-LOW, no header)
- *   D31  PA1   RX LED = LED_BUILTIN_RX (on-board, active-LOW, no header)
- *   D32  PF0   BTN_BUILTIN (on-board button, 5.1 kOhm pull-down,
+ *        PF4   not connected on the board (index 23; no Dn alias)
+ *        PF5   not connected on the board (index 24; no Dn alias)
+ *   D25..D31   (do not exist - gap)
+ *   D32  PA1   BTN_BUILTIN (on-board button, 5.1 kOhm pull-down,
  *              pressed = HIGH; no ADC channel) - the family-wide number
  *   --- not exposed as a numbered Dn (appended so the arrays are complete) ---
  *        PF6   RESET                                   index 33
@@ -70,30 +78,39 @@
  *   USART0-> Serial1, ALT1 (PA4 TX / PA5 RX / PA6 XCK / PA7 XDIR) = D1/D0/D7/D8.
  *   USART1-> Serial2, ALT2 (PD6 TX / PD7 RX) = D15/D18. Shares pins with SPI
  *            SCK/SS, so Serial2 and SPI are mutually exclusive.
- *   CCL   -> LUT0: OUT = D7 (alt; IN0/IN1 = PA0/PA1 are the TX/RX LEDs);
+ *   CCL   -> LUT0: OUT = D7 (alt; IN0 = PA0 is the LED data line, IN1 = PA1 =
+ *                  BTN_BUILTIN = D32);
  *            LUT1: OUT = D4 (IN0..IN2 = PC0..PC2 do not exist on the 32-pin part);
  *            LUT2: IN0/IN1/IN2 = D5/D6/D9, OUT = D10, alt OUT = D15;
- *            LUT3: IN0 = D32 (BTN_BUILTIN), IN1/IN2 = A1/A2, OUT = A3 (D21).
+ *            LUT3: IN0/IN1/IN2 = A1/A2/A3 (D19/D20/D21). Its OUT (PF3) is the
+ *                  LED_BUILTIN state pin and reaches no header, so LUT3 has no
+ *                  usable pin output on this board (use it through the event
+ *                  system or as a feedback/sequencer stage instead).
  *   AREF  -> PD7 (VREFA) doubles as analog input A0 (D18). The Pro Micro has
  *            no AREF header; an external reference would have to be fed into
  *            the A0 pin and costs A0 / SPI SS / Serial2 RX.
  *   LED   -> the user LED is an XL-5050RGBC-WS2812B addressable RGB LED whose
- *            DIN is wired to PF4. LED_BUILTIN is D17 = PF5, an otherwise
- *            unused MCU pin (no header) that acts as the LED's STATE pin:
+ *            DIN is wired to PA0 through a 330 Ohm series resistor.
+ *            LED_BUILTIN is D17 = PF3, an MCU pin that is not connected to
+ *            anything on the board and acts as the LED's STATE pin:
  *            digitalWrite()/digitalWriteFast() to D17 are SOFTWARE-mirrored -
- *            the core reads the resulting PF5 OUT bit and sends the matching
- *            WS2812 frame on PF4 (HIGH = lit in the current color, yellow by
- *            default; LOW = off). Because PF5 is a real pin, digitalRead(D17)
+ *            the core reads the resulting PF3 OUT bit and sends the matching
+ *            WS2812 frame on PA0 (HIGH = lit in the current color, yellow by
+ *            default; LOW = off). Because PF3 is a real pin, digitalRead(D17)
  *            returns the LED state, so "digitalWrite(LED_BUILTIN,
  *            !digitalRead(LED_BUILTIN))" toggles as expected (the data line
  *            itself must idle LOW for the WS2812 latch, so it cannot carry the
  *            state). Same mechanism and same setBLEDColor() API as the Uno
- *            UkiUkiduino; only the pins differ. Each mirrored write costs
- *            ~330 us (300 us latch guard + 24 us frame).
- *            TX/RX activity LEDs: PA0 (D30) / PA1 (D31), active-LOW (anode to
- *            +5V via 1 kOhm), driven from the USB-CDC hooks
- *            (ukiukiduinopony_init.cpp), Pro Micro convention.
- *   BUTTON-> BTN_BUILTIN = D32 (PF0). Same number on every UkiUkiduino board. 5.1 kOhm pull-down on the board;
+ *            UkiUkiduino, and the same data pin (PA0); only LED_BUILTIN's
+ *            number (D17 instead of D13) and the LED's byte order differ.
+ *            Each mirrored write costs ~330 us (300 us latch guard + 24 us
+ *            frame).
+ *            There are NO TX/RX activity LEDs on this board (the white LED
+ *            next to the USB connector is a plain power indicator). The
+ *            32U4 helper macros TXLED0/TXLED1/RXLED0/RXLED1/TX_RX_LED_INIT
+ *            are kept as no-ops so Pro Micro sketches still compile.
+ *   BUTTON-> BTN_BUILTIN = D32 (PA1). Same number and same MCU pin as on the
+ *            Uno-form UkiUkiduino. 5.1 kOhm pull-down on the board;
  *            pressed = HIGH. Use pinMode(BTN_BUILTIN, INPUT) - no pullup needed.
  *   Serial-> native USB CDC (USBSerial), Leonardo/Micro convention.
  *
@@ -112,7 +129,7 @@
  * -DARDUINO_AVR_UKIUKIDUINO_PONY); the fallback below covers builds
  * outside the IDE. UKIUKIDUINO_PINOUT is shared with the Uno-form UkiUkiduino
  * and marks "a board with the UkiUkiduino LED/button feature set";
- * UKIUKIDUINO_PONY_PINOUT selects the ProMicro-specific implementation
+ * UKIUKIDUINO_PONY_PINOUT selects the Pony-specific implementation
  * files (ukiukiduinopony_init.cpp / ukiukiduinopony_led.cpp).
  * MCU identification comes from the compiler (-mmcu): __AVR_AVR64DU32__. */
 #ifndef ARDUINO_AVR_UKIUKIDUINO_PONY
@@ -148,16 +165,16 @@
 #define PIN_PD5 (14)  // D14 MISO / TCA0 WO5
 #define PIN_PD6 (15)  // D15 SCK / Serial2 TX
 #define PIN_PD4 (16)  // D16 MOSI / TCA0 WO4
-#define PIN_PF5 (17)  // D17 LED_BUILTIN state pin (mirrored to the WS2812B on PF4; no header)
+#define PIN_PF3 (17)  // D17 LED_BUILTIN state pin (mirrored to the WS2812B on PA0; pin not connected on the board)
 #define PIN_PD7 (18)  // D18 A0 / SPI SS / Serial2 RX / VREFA
-#define PIN_PF1 (19)  // D19 A1 / LUT3-IN1
-#define PIN_PF2 (20)  // D20 A2 / LUT3-IN2 / EVOUTF
-#define PIN_PF3 (21)  // D21 A3 / LUT3-OUT
-#define PIN_PF4 (23)  // WS2812B LED data-in (driven by the D17 software mirror); no Dn alias
-//  no  D22..D29              (gap)
-#define PIN_PA0 (30)  // D30 TX LED = LED_BUILTIN_TX (active-LOW, on-board only)
-#define PIN_PA1 (31)  // D31 RX LED = LED_BUILTIN_RX (active-LOW, on-board only)
-#define PIN_PF0 (32)  // D32 BTN_BUILTIN (on-board button, 5.1k pull-down, pressed = HIGH) / LUT3-IN0
+#define PIN_PF0 (19)  // D19 A1 / LUT3-IN0
+#define PIN_PF1 (20)  // D20 A2 / LUT3-IN1
+#define PIN_PF2 (21)  // D21 A3 / LUT3-IN2 / EVOUTF
+#define PIN_PA0 (22)  // WS2812B LED data-in (driven by the D17 software mirror); no Dn alias
+#define PIN_PF4 (23)  // not connected on the board; no Dn alias
+#define PIN_PF5 (24)  // not connected on the board; no Dn alias
+//  no  D25..D31              (gap)
+#define PIN_PA1 (32)  // D32 BTN_BUILTIN (on-board button, 5.1k pull-down, pressed = HIGH) / LUT0-IN1
 #define PIN_PF6 (33)  // RESET
 #define PIN_PF7 (34)  // UPDI  (highest index -> sets NUM_DIGITAL_PINS = 35)
 
@@ -168,30 +185,26 @@
 // NUM_INTERNALLY_USED_PINS           -> auto = 0 (crystal-less: no reserved GPIO)
 
 #if !defined(LED_BUILTIN)
-  #define LED_BUILTIN                  (PIN_PF5)   // D17, on-board full-color LED (WS2812B mirror; Active-HIGH)
+  #define LED_BUILTIN                  (PIN_PF3)   // D17, on-board full-color LED (WS2812B mirror; Active-HIGH)
 #endif
 #if !defined(BTN_BUILTIN)
-  #define BTN_BUILTIN                  (PIN_PF0)   // D32, on-board button (pull-down, pressed = HIGH)
+  #define BTN_BUILTIN                  (PIN_PA1)   // D32, on-board button (pull-down, pressed = HIGH)
 #endif
-#define LED_BUILTIN_TX                 (PIN_PA0)   // D30 = USB-CDC TX activity LED (active-LOW)
-#define LED_BUILTIN_RX                 (PIN_PA1)   // D31 = USB-CDC RX activity LED (active-LOW)
-
-/* 32U4 Leonardo / Pro Micro activity-LED helper macros, same semantics:
- * xxLED1 = ON, xxLED0 = OFF (both LEDs are active-LOW on this board too;
- * TX = PA0/D30, RX = PA1/D31). OUT is set HIGH (= off) before DIR so the
- * LEDs cannot flash on. The core's own CDC activity one-shot
- * (ukiukiduinopony_init.cpp) drives the same pins. */
-#define TX_RX_LED_INIT                 (PORTA.OUTSET = (PIN0_bm | PIN1_bm), \
-                                        PORTA.DIRSET = (PIN0_bm | PIN1_bm))
-#define TXLED1                         (PORTA.OUTCLR = PIN0_bm)   /* TX LED (PA0/D30) ON  */
-#define TXLED0                         (PORTA.OUTSET = PIN0_bm)   /* TX LED (PA0/D30) OFF */
-#define RXLED1                         (PORTA.OUTCLR = PIN1_bm)   /* RX LED (PA1/D31) ON  */
-#define RXLED0                         (PORTA.OUTSET = PIN1_bm)   /* RX LED (PA1/D31) OFF */
+/* 32U4 Leonardo / Pro Micro activity-LED helper macros. The UkiUkiduino Pony
+ * has NO TX/RX activity LEDs (PA0/PA1 carry the full-color LED data line and
+ * the button), so LED_BUILTIN_TX / LED_BUILTIN_RX are deliberately NOT
+ * defined, and the helper macros are no-ops that only keep Pro Micro sketches
+ * compiling. */
+#define TX_RX_LED_INIT                 ((void)0)
+#define TXLED1                         ((void)0)
+#define TXLED0                         ((void)0)
+#define RXLED1                         ((void)0)
+#define RXLED0                         ((void)0)
 
 /* ---- LED_BUILTIN software mirror (see wiring_digital.c) ----
- * digitalWrite()/digitalWriteFast() on D17 (PF5) also call the hook below,
- * which reads the RESULTING PF5 OUT bit (so HIGH/LOW/CHANGE all mirror
- * correctly) and sends the matching WS2812 frame on PF4: HIGH = lit in the
+ * digitalWrite()/digitalWriteFast() on D17 (PF3) also call the hook below,
+ * which reads the RESULTING PF3 OUT bit (so HIGH/LOW/CHANGE all mirror
+ * correctly) and sends the matching WS2812 frame on PA0: HIGH = lit in the
  * current color (default: yellow), LOW = off. Implemented in
  * ukiukiduinopony_led.cpp. Direct register writes are NOT mirrored.
  * TIMING: each mirrored write busy-waits the WS2812 frame-latch time
@@ -199,7 +212,7 @@
  * streams the 24-bit frame with interrupts briefly disabled (~24 us).
  * digitalWrite(17) therefore takes ~330 us - fine for Blink-style use. */
 #define LED_BUILTIN_MIRROR
-#define LED_MIRROR_SRC_PIN             (PIN_PF5)   /* D17 */
+#define LED_MIRROR_SRC_PIN             (PIN_PF3)   /* D17 */
 
 #ifdef __cplusplus
 extern "C" void __led_builtin_mirror_hook(void);
@@ -208,7 +221,7 @@ void __led_builtin_mirror_hook(void);
 #endif
 
 #ifdef __cplusplus
-/* ---- On-board LED color API (XL-5050RGBC-WS2812B on PF4) ----
+/* ---- On-board LED color API (XL-5050RGBC-WS2812B on PA0) ----
  * Identical to the Uno-form UkiUkiduino: the LED follows LED_BUILTIN (D17),
  * digitalWrite(LED_BUILTIN, HIGH/LOW) = lit/off, and these functions change
  * WHAT "lit" looks like. The "B" in setBLEDColor marks them as Built-in-LED
@@ -234,7 +247,7 @@ void setBLEDColor(LEDColorName color, uint8_t brightness = BLED_DEFAULT_BRIGHTNE
 /* ---- Event output pins: FIXED by the board's pin-configuration table ----
  *   EVOUTA -> PA7 = D8   (PORTMUX ALT1;    default PA2 is SDA)
  *   EVOUTD -> PD2 = D9   (PORTMUX default; the alternative PD7 is A0)
- *   EVOUTF -> PF2 = D20  (PORTMUX default) = A2 */
+ *   EVOUTF -> PF2 = D21  (PORTMUX default) = A3 */
 #define WAZAMONO_EVOUTA_PIN            (PIN_PA7)
 #define WAZAMONO_EVOUTA_ALT            (1)
 #define WAZAMONO_EVOUTD_PIN            (PIN_PD2)
@@ -247,9 +260,11 @@ void setBLEDColor(LEDColorName color, uint8_t brightness = BLED_DEFAULT_BRIGHTNE
 #endif
 
 /* ---- Explicit maps (NONCANONICAL numbering: arithmetic shortcuts cannot be used) ----
- * PA0/PA1 (the TX/RX LEDs) have no ADC channel on the DU. PF4/PF5 (the
- * WS2812 data / state pins) do have channels (AIN20/AIN21) but are internal
- * to the LED and deliberately not mapped. */
+ * PA0/PA1 (LED data / button) have no ADC channel on the DU. PF4/PF5 do have
+ * channels (AIN20/AIN21) but are not connected on the board and deliberately
+ * not mapped. PF3 (AIN19 = A20) is the unconnected LED_BUILTIN state pin; it
+ * is mapped because the pin-configuration table lists it, but there is
+ * nothing to measure on it. */
 #define digitalPinToAnalogInput(p)  ( \
     (p) == PIN_PD0 ?  0 : (p) == PIN_PD1 ?  1 : (p) == PIN_PD2 ?  2 : (p) == PIN_PD3 ?  3 : \
     (p) == PIN_PD4 ?  4 : (p) == PIN_PD5 ?  5 : (p) == PIN_PD6 ?  6 : (p) == PIN_PD7 ?  7 : \
@@ -279,7 +294,7 @@ void setBLEDColor(LEDColorName color, uint8_t brightness = BLED_DEFAULT_BRIGHTNE
  * other two return to plain GPIO. All three share TCB1's frequency and duty.
  * tone() uses TCB1 (millis on TCB0), so tone() suspends D3/D4/D7 PWM.
  * NOTE: TCB1 stays on its DEFAULT WO position (PA3). Its ALT1 position is
- * PF5 = D17 = LED_BUILTIN state pin, so it must never be parked there. */
+ * PF5, which is not connected on this board. */
 #if defined(MILLIS_USE_TIMERB1)
   #define digitalPinHasPWMTCB(p) (0)                   /* TCB1 is millis; no TCB PWM */
 #else
@@ -295,7 +310,7 @@ void setBLEDColor(LEDColorName color, uint8_t brightness = BLED_DEFAULT_BRIGHTNE
  * D14/D16 (SPI-exclusive). */
 #define TCA0_PINS                       (PORTMUX_TCA0_PORTD_gc)
 #define TCB0_PINS                       (0x00)   // TCB0 = millis; WO unused (default PA2 position)
-#define TCB1_PINS                       (0x00)   // TCB1 WO on PA3 (default) = D3, the default outlet (ALT1 would be PF5 = LED state pin!)
+#define TCB1_PINS                       (0x00)   // TCB1 WO on PA3 (default) = D3, the default outlet (ALT1 would be PF5 = not connected)
 
 #define PIN_TCA0_WO0_INIT               (PIN_PD0)
 #define PIN_TCB0_WO_INIT                (PIN_PA2)   // TCB0 = millis; not enabled for PWM
@@ -335,20 +350,20 @@ void setBLEDColor(LEDColorName color, uint8_t brightness = BLED_DEFAULT_BRIGHTNE
 #define PIN_WIRE_SCL                    (PIN_PA3)   // D3
 #define PIN_WIRE_SDA_PINSWAP_1          (NOT_A_PIN)
 #define PIN_WIRE_SCL_PINSWAP_1          (NOT_A_PIN)
-#define PIN_WIRE_SDA_PINSWAP_3          (NOT_A_PIN) // ALT3 = PA0/PA1 = the on-board TX/RX LEDs: not offered
+#define PIN_WIRE_SDA_PINSWAP_3          (NOT_A_PIN) // ALT3 = PA0/PA1 = the on-board LED data line / button: not offered
 #define PIN_WIRE_SCL_PINSWAP_3          (NOT_A_PIN)
 
 /* ---- USART0 -> user-facing "Serial1", default position ALT1
  * (PA4 TX / PA5 RX / PA6 XCK / PA7 XDIR = D1/D0/D7/D8): the full-function
  * position, enabling USART-SPI-host mode and RS-485 XDIR on header pins. ---- */
-#define HWSERIAL0_MUX                   (0x00 /* PORTMUX_USART0_DEFAULT_gc - PA0/PA1 = TX/RX LEDs */)
+#define HWSERIAL0_MUX                   (0x00 /* PORTMUX_USART0_DEFAULT_gc - PA0/PA1 = LED data / button */)
 #define HWSERIAL0_MUX_PINSWAP_1         (0x01 /* PORTMUX_USART0_ALT1_gc - PA4..PA7 */)
 #define HWSERIAL0_MUX_PINSWAP_2         (0x02 /* PORTMUX_USART0_ALT2_gc - PA2/PA3 (= I2C) */)
 #define HWSERIAL0_MUX_PINSWAP_3         (0x03 /* PORTMUX_USART0_ALT3_gc - PD4..PD7 (= SPI/A0) */)
 #define HWSERIAL0_MUX_PINSWAP_NONE      (0x05)
-#define HWSERIAL0_MUX_DEFAULT          (1)   /* default: USART0 ALT1 (PA4/PA5). DEFAULT (PA0/PA1) = TX/RX LEDs: not offered. */
-#define PIN_HWSERIAL0_TX                (NOT_A_PIN) /* DEFAULT = PA0 (TX LED, no header) */
-#define PIN_HWSERIAL0_RX                (NOT_A_PIN) /* DEFAULT = PA1 (RX LED, no header) */
+#define HWSERIAL0_MUX_DEFAULT          (1)   /* default: USART0 ALT1 (PA4/PA5). DEFAULT (PA0/PA1) = LED data / button: not offered. */
+#define PIN_HWSERIAL0_TX                (NOT_A_PIN) /* DEFAULT = PA0 (LED data line, no header) */
+#define PIN_HWSERIAL0_RX                (NOT_A_PIN) /* DEFAULT = PA1 (BTN_BUILTIN, no header) */
 #define PIN_HWSERIAL0_XCK               (PIN_PA2)
 #define PIN_HWSERIAL0_XDIR              (PIN_PA3)
 #define PIN_HWSERIAL0_TX_PINSWAP_1      (PIN_PA4)
@@ -386,14 +401,16 @@ void setBLEDColor(LEDColorName color, uint8_t brightness = BLED_DEFAULT_BRIGHTNE
 
 /* ---- Arduino analog aliases (per the board pin-configuration table).
  * A0..A3 = D18..D21 match the Pro Micro header. There is NO A4/A5 (the Pro
- * Micro has no such pins; on this board PF4/PF5 belong to the LED). The
+ * Micro has no such pins; on this board PF4/PF5 are not connected). The
  * remaining ADC-capable header pins are reachable as A6..A19, each carrying
  * its own D-number's channel (A6=D4, A7=D6, A8=D8, A9=D9, A10=D10, A11=D0,
- * A12=D1, A13=D2, A14=D3, A15=D5, A16=D7, A17=D14, A18=D15, A19=D16). ---- */
+ * A12=D1, A13=D2, A14=D3, A15=D5, A16=D7, A17=D14, A18=D15, A19=D16).
+ * A20 = D17 (PF3, the unconnected LED_BUILTIN state pin) exists only because
+ * the pin table lists it. ---- */
 #define PIN_A0   (PIN_PD7)   // D18 (also SPI SS / Serial2 RX / VREFA)
-#define PIN_A1   (PIN_PF1)   // D19
-#define PIN_A2   (PIN_PF2)   // D20
-#define PIN_A3   (PIN_PF3)   // D21
+#define PIN_A1   (PIN_PF0)   // D19
+#define PIN_A2   (PIN_PF1)   // D20
+#define PIN_A3   (PIN_PF2)   // D21
 #define PIN_A6   (PIN_PC3)   // D4
 #define PIN_A7   (PIN_PD1)   // D6
 #define PIN_A8   (PIN_PA7)   // D8
@@ -408,11 +425,12 @@ void setBLEDColor(LEDColorName color, uint8_t brightness = BLED_DEFAULT_BRIGHTNE
 #define PIN_A17  (PIN_PD5)   // D14
 #define PIN_A18  (PIN_PD6)   // D15
 #define PIN_A19  (PIN_PD4)   // D16
+#define PIN_A20  (PIN_PF3)   // D17 (LED_BUILTIN state pin; not connected on the board)
 
 /* --- Uno R4 style number-prefixed digital pin aliases ---
- * D-number == Arduino digital pin number. Internal-only pins (PF4 LED data,
- * PF6 RESET, PF7 UPDI) are intentionally NOT exposed as Dn. The on-board
- * LED_BUILTIN (D17), button (D32) and TX/RX LEDs (D30/D31) ARE exposed. */
+ * D-number == Arduino digital pin number. Internal-only pins (PA0 LED data,
+ * PF4/PF5 not connected, PF6 RESET, PF7 UPDI) are intentionally NOT exposed
+ * as Dn. The on-board LED_BUILTIN (D17) and button (D32) ARE exposed. */
 #undef D0
 #undef D1
 #undef D2
@@ -433,8 +451,6 @@ void setBLEDColor(LEDColorName color, uint8_t brightness = BLED_DEFAULT_BRIGHTNE
 #undef D20
 #undef D21
 #undef D32
-#undef D30
-#undef D31
 static const uint8_t D0  = PIN_PA5;  // RX (Serial1)
 static const uint8_t D1  = PIN_PA4;  // TX (Serial1)
 static const uint8_t D2  = PIN_PA2;  // SDA
@@ -449,14 +465,12 @@ static const uint8_t D10 = PIN_PD3;  // ~PWM
 static const uint8_t D14 = PIN_PD5;  // MISO / ~PWM
 static const uint8_t D15 = PIN_PD6;  // SCK / Serial2 TX
 static const uint8_t D16 = PIN_PD4;  // MOSI / ~PWM
-static const uint8_t D17 = PIN_PF5;  // LED_BUILTIN (full-color LED state pin, on-board only)
+static const uint8_t D17 = PIN_PF3;  // LED_BUILTIN (full-color LED state pin, on-board only)
 static const uint8_t D18 = PIN_PD7;  // A0 / SPI SS / Serial2 RX
-static const uint8_t D19 = PIN_PF1;  // A1
-static const uint8_t D20 = PIN_PF2;  // A2 / EVOUTF
-static const uint8_t D21 = PIN_PF3;  // A3 / LUT3-OUT
-static const uint8_t D32 = PIN_PF0;  // BTN_BUILTIN (on-board button, pressed = HIGH)
-static const uint8_t D30 = PIN_PA0;  // TX LED = LED_BUILTIN_TX (active-LOW, on-board only)
-static const uint8_t D31 = PIN_PA1;  // RX LED = LED_BUILTIN_RX (active-LOW, on-board only)
+static const uint8_t D19 = PIN_PF0;  // A1 / LUT3-IN0
+static const uint8_t D20 = PIN_PF1;  // A2 / LUT3-IN1
+static const uint8_t D21 = PIN_PF2;  // A3 / LUT3-IN2 / EVOUTF
+static const uint8_t D32 = PIN_PA1;  // BTN_BUILTIN (on-board button, pressed = HIGH)
 
 static const uint8_t A0   = PIN_A0;
 static const uint8_t A1   = PIN_A1;
@@ -476,6 +490,7 @@ static const uint8_t A16  = PIN_A16;
 static const uint8_t A17  = PIN_A17;
 static const uint8_t A18  = PIN_A18;
 static const uint8_t A19  = PIN_A19;
+static const uint8_t A20  = PIN_A20;
 
 /* Direct ADC channel identifiers (ADC_CH() sets the 0x80 "this is a channel" flag). */
 #define AIN0   ADC_CH(0)
@@ -520,22 +535,22 @@ static const uint8_t A19  = PIN_A19;
     PD,         // 14 PD5  D14 MISO (TCA0 WO5, dynamic)
     PD,         // 15 PD6  D15 SCK/Serial2 TX
     PD,         // 16 PD4  D16 MOSI (TCA0 WO4, dynamic)
-    PF,         // 17 PF5  D17 LED_BUILTIN (state pin, mirrored to WS2812B on PF4)
+    PF,         // 17 PF3  D17 LED_BUILTIN (state pin, mirrored to WS2812B on PA0)
     PD,         // 18 PD7  D18 A0/SS/Serial2 RX
-    PF,         // 19 PF1  D19 A1
-    PF,         // 20 PF2  D20 A2/EVOUTF
-    PF,         // 21 PF3  D21 A3/LUT3-OUT
-    NOT_A_PORT, // 22 (gap)
-    PF,         // 23 PF4  WS2812B LED data-in
-    NOT_A_PORT, // 24 (gap)
+    PF,         // 19 PF0  D19 A1
+    PF,         // 20 PF1  D20 A2
+    PF,         // 21 PF2  D21 A3/EVOUTF
+    PA,         // 22 PA0  WS2812B LED data-in
+    PF,         // 23 PF4  (not connected)
+    PF,         // 24 PF5  (not connected)
     NOT_A_PORT, // 25 (gap)
     NOT_A_PORT, // 26 (gap)
     NOT_A_PORT, // 27 (gap)
     NOT_A_PORT, // 28 (gap)
     NOT_A_PORT, // 29 (gap)
-    PA,         // 30 PA0  D30 TX LED
-    PA,         // 31 PA1  D31 RX LED
-    PF,         // 32 PF0  D32 BTN_BUILTIN
+    NOT_A_PORT, // 30 (gap)
+    NOT_A_PORT, // 31 (gap)
+    PA,         // 32 PA1  D32 BTN_BUILTIN
     PF,         // 33 PF6  RESET
     PF          // 34 PF7  UPDI
   };
@@ -558,22 +573,22 @@ static const uint8_t A19  = PIN_A19;
     PIN5_bp,   // 14 PD5  D14
     PIN6_bp,   // 15 PD6  D15
     PIN4_bp,   // 16 PD4  D16
-    PIN5_bp,   // 17 PF5  D17 LED_BUILTIN
+    PIN3_bp,   // 17 PF3  D17 LED_BUILTIN
     PIN7_bp,   // 18 PD7  D18
-    PIN1_bp,   // 19 PF1  D19
-    PIN2_bp,   // 20 PF2  D20
-    PIN3_bp,   // 21 PF3  D21
-    NOT_A_PIN, // 22 (gap)
-    PIN4_bp,   // 23 PF4  WS2812B data
-    NOT_A_PIN, // 24 (gap)
+    PIN0_bp,   // 19 PF0  D19
+    PIN1_bp,   // 20 PF1  D20
+    PIN2_bp,   // 21 PF2  D21
+    PIN0_bp,   // 22 PA0  WS2812B data
+    PIN4_bp,   // 23 PF4  (not connected)
+    PIN5_bp,   // 24 PF5  (not connected)
     NOT_A_PIN, // 25 (gap)
     NOT_A_PIN, // 26 (gap)
     NOT_A_PIN, // 27 (gap)
     NOT_A_PIN, // 28 (gap)
     NOT_A_PIN, // 29 (gap)
-    PIN0_bp,   // 30 PA0  D30 TX LED
-    PIN1_bp,   // 31 PA1  D31 RX LED
-    PIN0_bp,   // 32 PF0  D32 BTN_BUILTIN
+    NOT_A_PIN, // 30 (gap)
+    NOT_A_PIN, // 31 (gap)
+    PIN1_bp,   // 32 PA1  D32 BTN_BUILTIN
     PIN6_bp,   // 33 PF6  RESET
     PIN7_bp    // 34 PF7  UPDI
   };
@@ -596,22 +611,22 @@ static const uint8_t A19  = PIN_A19;
     PIN5_bm,   // 14 PD5  D14
     PIN6_bm,   // 15 PD6  D15
     PIN4_bm,   // 16 PD4  D16
-    PIN5_bm,   // 17 PF5  D17 LED_BUILTIN
+    PIN3_bm,   // 17 PF3  D17 LED_BUILTIN
     PIN7_bm,   // 18 PD7  D18
-    PIN1_bm,   // 19 PF1  D19
-    PIN2_bm,   // 20 PF2  D20
-    PIN3_bm,   // 21 PF3  D21
-    NOT_A_PIN, // 22 (gap)
-    PIN4_bm,   // 23 PF4  WS2812B data
-    NOT_A_PIN, // 24 (gap)
+    PIN0_bm,   // 19 PF0  D19
+    PIN1_bm,   // 20 PF1  D20
+    PIN2_bm,   // 21 PF2  D21
+    PIN0_bm,   // 22 PA0  WS2812B data
+    PIN4_bm,   // 23 PF4  (not connected)
+    PIN5_bm,   // 24 PF5  (not connected)
     NOT_A_PIN, // 25 (gap)
     NOT_A_PIN, // 26 (gap)
     NOT_A_PIN, // 27 (gap)
     NOT_A_PIN, // 28 (gap)
     NOT_A_PIN, // 29 (gap)
-    PIN0_bm,   // 30 PA0  D30 TX LED
-    PIN1_bm,   // 31 PA1  D31 RX LED
-    PIN0_bm,   // 32 PF0  D32 BTN_BUILTIN
+    NOT_A_PIN, // 30 (gap)
+    NOT_A_PIN, // 31 (gap)
+    PIN1_bm,   // 32 PA1  D32 BTN_BUILTIN
     PIN6_bm,   // 33 PF6  RESET
     PIN7_bm    // 34 PF7  UPDI
   };
@@ -638,22 +653,22 @@ static const uint8_t A19  = PIN_A19;
     NOT_ON_TIMER, // 14 PD5  D14 (TCA0 WO5, dynamic)
     NOT_ON_TIMER, // 15 PD6  D15
     NOT_ON_TIMER, // 16 PD4  D16 (TCA0 WO4, dynamic)
-    NOT_ON_TIMER, // 17 PF5  D17 LED_BUILTIN
+    NOT_ON_TIMER, // 17 PF3  D17 LED_BUILTIN
     NOT_ON_TIMER, // 18 PD7  D18
-    NOT_ON_TIMER, // 19 PF1  D19
-    NOT_ON_TIMER, // 20 PF2  D20
-    NOT_ON_TIMER, // 21 PF3  D21
-    NOT_ON_TIMER, // 22 (gap)
-    NOT_ON_TIMER, // 23 PF4  WS2812B data
-    NOT_ON_TIMER, // 24 (gap)
+    NOT_ON_TIMER, // 19 PF0  D19
+    NOT_ON_TIMER, // 20 PF1  D20
+    NOT_ON_TIMER, // 21 PF2  D21
+    NOT_ON_TIMER, // 22 PA0  WS2812B data
+    NOT_ON_TIMER, // 23 PF4  (not connected)
+    NOT_ON_TIMER, // 24 PF5  (not connected)
     NOT_ON_TIMER, // 25 (gap)
     NOT_ON_TIMER, // 26 (gap)
     NOT_ON_TIMER, // 27 (gap)
     NOT_ON_TIMER, // 28 (gap)
     NOT_ON_TIMER, // 29 (gap)
-    NOT_ON_TIMER, // 30 PA0  D30 TX LED
-    NOT_ON_TIMER, // 31 PA1  D31 RX LED
-    NOT_ON_TIMER, // 32 PF0  D32 BTN_BUILTIN
+    NOT_ON_TIMER, // 30 (gap)
+    NOT_ON_TIMER, // 31 (gap)
+    NOT_ON_TIMER, // 32 PA1  D32 BTN_BUILTIN
     NOT_ON_TIMER, // 33 PF6  RESET
     NOT_ON_TIMER  // 34 PF7  UPDI
   };

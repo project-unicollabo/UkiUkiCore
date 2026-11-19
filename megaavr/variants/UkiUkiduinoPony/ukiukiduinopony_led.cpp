@@ -5,15 +5,16 @@
  * (see LICENSE.md).
  *
  * The on-board LED is an XL-5050RGBC-WS2812B (XINGLIGHT, 5050 SMD, LCSC
- * C2843785) addressable RGB LED whose DIN is wired to PF4 through a 330 Ohm
- * series resistor. LED_BUILTIN is D17 = PF5, used as the LED's STATE pin: the
- * core's LED_BUILTIN_MIRROR hook (wiring_digital.c) calls
+ * C2843785) addressable RGB LED whose DIN is wired to PA0 through a 330 Ohm
+ * series resistor. LED_BUILTIN is D17 = PF3 (an MCU pin that is not connected
+ * to anything on the board), used as the LED's STATE pin: the core's
+ * LED_BUILTIN_MIRROR hook (wiring_digital.c) calls
  * __led_builtin_mirror_hook() after every digitalWrite()/digitalWriteFast()
- * that lands on D17. The hook reads the RESULTING PF5 OUT bit and sends the
- * matching one-pixel frame on PF4:
+ * that lands on D17. The hook reads the RESULTING PF3 OUT bit and sends the
+ * matching one-pixel frame on PA0:
  *
- *      PF5 OUT = 1  ->  LED lit in the current color (default: yellow)
- *      PF5 OUT = 0  ->  LED off (0,0,0 frame)
+ *      PF3 OUT = 1  ->  LED lit in the current color (default: yellow)
+ *      PF3 OUT = 0  ->  LED off (0,0,0 frame)
  *
  * so the stock Blink sketch works completely unmodified, and blinks yellow.
  * setBLEDColor() (declared in pins_arduino.h) changes what "lit" looks like;
@@ -32,7 +33,7 @@
  *      Data order: G7..G0 R7..R0 B7..B0 (GRB, MSB first) - the usual WS2812B
  *      order. NOTE: the Uno UkiUkiduino's WS2812D-F5-12mA-C1 is RGB-ordered
  *      and has different limits, which is why the two variants have separate
- *      drivers.
+ *      drivers even though both LEDs hang off PA0.
  *
  * The bit loop is cycle-counted per F_CPU. Each bit is P cycles; the line is
  * high for H0 cycles (bit 0) or H1 cycles (bit 1); the low time is P-H0 / P-H1.
@@ -50,9 +51,9 @@
  * latched (RESET >= 80 us; the same guard the Uno variant uses). A mirrored
  * digitalWrite(17) therefore costs ~330 us.
  *
- * PF4 is toggled with SBI/CBI on VPORTF.OUT (I/O address 0x15, 1 cycle each
- * on AVRxt), so the other PORTF pins (PF0 button, PF1..PF3 = A1..A3, PF5 =
- * the LED state pin) are never disturbed.
+ * PA0 is toggled with SBI/CBI on VPORTA.OUT (I/O address 0x01, 1 cycle each
+ * on AVRxt), so the other PORTA pins (PA1 button, PA2/PA3 I2C, PA4/PA5
+ * Serial1, PA6/PA7 = D7/D8) are never disturbed.
  */
 
 #include <Arduino.h>
@@ -100,10 +101,10 @@
 #define WS_NOPS_(n) WS_NOP##n
 #define WS_NOPS(n)  WS_NOPS_(n)
 
-/* VPORTF.OUT I/O address: VPORTn base = 4*n (A=0x00, C=0x08, D=0x0C, F=0x14),
+/* VPORTA.OUT I/O address: VPORTn base = 4*n (A=0x00, C=0x08, D=0x0C, F=0x14),
  * OUT = base + 1. Kept as a literal because SBI/CBI need an immediate. */
-#define UUPM_WS_VPORT_OUT  0x15
-#define UUPM_WS_BIT        4        /* PF4 */
+#define UUPONY_WS_VPORT_OUT  0x01
+#define UUPONY_WS_BIT        0        /* PA0 */
 
 /* Current "lit" appearance, stored as the FINAL RGB values to display
  * (brightness is applied when a named color is set, not at send time).
@@ -126,7 +127,7 @@ static void ws2812_byte(uint8_t b) {
   uint8_t cnt = 8;
   __asm__ __volatile__(
     "1:                          \n\t"
-    "sbi  %[port], %[bit]        \n\t" /* c1          line HIGH (VPORTF.OUT.4) */
+    "sbi  %[port], %[bit]        \n\t" /* c1          line HIGH (VPORTA.OUT.0) */
     WS_NOPS(WS_NA)                      /* c2..c(H0-1)                        */
     "sbrs %[b], 7                \n\t" /* c(H0)       (2 cycles when bit=1)  */
     "cbi  %[port], %[bit]        \n\t" /* c(H0+1)     bit=0: LOW, T0H=H0 cy  */
@@ -137,7 +138,7 @@ static void ws2812_byte(uint8_t b) {
     WS_NOPS(WS_NC)
     "brne 1b                     \n\t" /* 2 cycles    -> P cycles/bit        */
     : [b] "+r" (b), [c] "+r" (cnt)
-    : [port] "I" (UUPM_WS_VPORT_OUT), [bit] "I" (UUPM_WS_BIT)
+    : [port] "I" (UUPONY_WS_VPORT_OUT), [bit] "I" (UUPONY_WS_BIT)
   );
 }
 
@@ -154,10 +155,10 @@ static void ws2812_frame(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 /* Core hook: called by wiring_digital.c after every digitalWrite()/
- * digitalWriteFast() on D17 (PF5). Reads the RESULTING OUT bit so
+ * digitalWriteFast() on D17 (PF3). Reads the RESULTING OUT bit so
  * HIGH/LOW/CHANGE all behave. Also used at startup to blank the LED. */
 extern "C" void __led_builtin_mirror_hook(void) {
-  if (VPORTF.OUT & (1 << 5)) {
+  if (VPORTF.OUT & (1 << 3)) {
     ws2812_frame(s_r, s_g, s_b);
   } else {
     ws2812_frame(0, 0, 0);
@@ -171,7 +172,7 @@ void setBLEDColor(uint8_t r, uint8_t g, uint8_t b) {
   s_r = r;
   s_g = g;
   s_b = b;
-  if (VPORTF.OUT & (1 << 5)) {   /* lit right now -> apply immediately */
+  if (VPORTF.OUT & (1 << 3)) {   /* lit right now -> apply immediately */
     __led_builtin_mirror_hook();
   }
 }
