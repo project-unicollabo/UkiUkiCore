@@ -16,7 +16,7 @@
  * どのピンが使える?
  *
  * 出力側 - イベント出力機能を持つ固定ピンのみ(1出力につき1本):
- *   D2, D9, A2   (UkiUkiduino Pony: D8, D9, A2)
+ *   D2, D9, A2   (UkiUkiduino Pony: D8, D9, A3)
  *
  * 入力側 - 任意のピン。ただし同時に使えるのは「1ポートにつき2本まで」
  * (ポートごとのイベントジェネレータが2本というハードウェア制限で、
@@ -26,10 +26,10 @@
  *   PORTD: D5  D6  D9  D10 D11 D12 D13 D20
  *   PORTF: D7  D8  A0  A1  A2  A3
  * UkiUkiduino Ponyの場合:
- *   PORTA: D0  D1  D2  D3  D7  D8  D30 D31
+ *   PORTA: D0  D1  D2  D3  D7  D8  D32
  *   PORTC: D4
  *   PORTD: D5  D6  D9  D10 D14 D15 D16 A0
- *   PORTF: D17 D32 A1  A2  A3
+ *   PORTF: D17 A1  A2  A3
  * 例: D0とD1を入力源にするのはOK。さらにD2(PORTAの3本目)を足そうと
  * すると、そのconnect()はfalseを返します。
  */

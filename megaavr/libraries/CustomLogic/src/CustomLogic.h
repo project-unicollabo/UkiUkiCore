@@ -21,13 +21,19 @@
  *     Tachi       D5 (PD0)   D6 (PD1)   D9 (PD2)   D10 (PD3)  D15 (PD6)
  *     Tsurugi     D5 (PD0)   D6 (PD1)   D9 (PD2)   D10 (PD3)  D13 (PD6)
  *     UkiUkiduino D5 (PD0)   D6 (PD1)   D9 (PD2)   D10 (PD3)  D13 (PD6)
+ *     Pony        D5 (PD0)   D6 (PD1)   D9 (PD2)   D10 (PD3)  D15 (PD6)
  *     Kunai       D4 (PA0)   D5 (PA1)   D3 (PA2)   D2 (PA3)   D8  (PA6)
  *   CustomLogic1  (not available on Kunai)
  *     Tachi       A1 (PF0)   A2 (PF1)   A3 (PF2)   D17 (PF3)  -
  *     Tsurugi     A0 (PF0)   A1 (PF1)   A2 (PF2)   A3 (PF3)   -
  *     UkiUkiduino A0 (PF0)   A1 (PF1)   A2 (PF2)   A3 (PF3)   -
+ *     Pony        A1 (PF0)   A2 (PF1)   A3 (PF2)   D17 (PF3)  -
  *   (Tachi: CustomLogic1's OUT = D17 is the on-board LED_BUILTIN, active-LOW,
  *    with no header pin; use setOutput()/addOutput() for an external signal.)
+ *   (UkiUkiduino Pony: CustomLogic1's OUT = D17 (PF3) is the LED_BUILTIN state
+ *    pin, which is not connected to anything on the board - the full-color
+ *    LED does NOT follow it. read() and interrupts work; use setOutput()/
+ *    addOutput() to bring the result out on a header pin.)
  *
  * The result can also be sent to the event-output pins - setOutput()/
  * addOutput() take care of the event system for you. These pins are FIXED
