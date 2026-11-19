@@ -119,7 +119,7 @@ ifeq ($(LED_WS2812),1)
 CFLAGS += -DBL_LED_WS2812
 endif
 # LED_WS2812_GRB=1: the LED is a WS2812B-class part (GRB byte order, 24 cy/bit
-# timing) - UkiUkiduino Pony: XL-5050RGBC-WS2812B on PF4. Default 0 =
+# timing) - UkiUkiduino Pony: XL-5050RGBC-WS2812B on PA0. Default 0 =
 # WS2812D-F5-12mA-C1 (RGB order, 30 cy/bit) as on the Uno-form UkiUkiduino.
 LED_WS2812_GRB ?= 0
 ifeq ($(LED_WS2812_GRB),1)

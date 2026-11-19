@@ -10,7 +10,7 @@
 #    board                 MCU        LED              VREG  USB ident (VID:PID)
 #    --------------------  ---------  ---------------  ----  --------------------------------
 #    UkiUkiduino           avr64du32  PA0 (WS2812D-F5) 1     0x1209:0x000B (test placeholder)
-#    UkiUkiduino Pony  avr64du32  PF4 (WS2812B)    1     0x1209:0x000D (test placeholder)
+#    UkiUkiduino Pony      avr64du32  PA0 (WS2812B)    1     0x1209:0x000D (test placeholder)
 #
 #    Both LEDs are addressable RGB LEDs (LED_WS2812=1): DFU mode breathes
 #    yellow; the AH polarity flag is ignored in this mode. The UkiUkiduino Pony's
@@ -121,7 +121,7 @@ build() {            # $1=class  $2=mcu  $3=LEDport  $4=LEDpin  $5=LED polarity 
 
 #     class                mcu        LEDport LEDpin LEDpol(AH|AL) VREG GRB
 build ukiukiduino          avr64du32  PORTA   0      AH            1    0
-build ukiukiduinopony  avr64du32  PORTF   4      AH            1    1
+build ukiukiduinopony      avr64du32  PORTA   0      AH            1    1
 
 echo ""
 echo "=== collecting hex files into ../hex/ ==="
