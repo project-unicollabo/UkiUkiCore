@@ -529,7 +529,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "UkiUkiduinoPony.kicad_pro",
+    "filename": "UkiUkiduinoPony_Schematics.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -693,8 +693,8 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "UkiUkiduinoPony.kicad_sch",
-        "name": "UkiUkiduinoPony",
+        "filename": "UkiUkiduinoPony_Schematics.kicad_sch",
+        "name": "UkiUkiduinoPony_Schematics",
         "uuid": "bdf45d2b-676e-44cb-9e4c-792388006e69"
       }
     ],
