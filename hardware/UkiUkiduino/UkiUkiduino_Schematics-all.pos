@@ -1,0 +1,41 @@
+### Footprint positions - created on 2026-10-31T02:21:31 ###
+### Printed by KiCad version 10.0.7
+## Unit = mm, Angle = deg.
+## Side : All
+# Ref     Val                 Package                                                 PosX       PosY       Rot  Side
+C1        0.1μF               C_0402_1005Metric                                     8.5344    32.3850  -90.0000  top
+C2        0.1μF               C_0402_1005Metric                                    13.8684    31.7220  -90.0000  top
+C3        22μF                C_0805_2012Metric                                    18.7604    15.6210  180.0000  top
+C4        22μF                C_0805_2012Metric                                    16.1950    27.2034  180.0000  top
+C5        22μF                C_0805_2012Metric                                    20.2794    27.2034    0.0000  top
+C6        22μF                C_0805_2012Metric                                     4.7244    17.8816  -90.0000  top
+C7        0.1μF               C_0402_1005Metric                                    15.0622    45.0850  180.0000  top
+C8        0.47μF              C_0603_1608Metric                                    14.8336    38.5702   90.0000  top
+C9        0.1μF               C_0402_1005Metric                                    19.6876    41.7068  180.0000  top
+C10       0.1μF               C_0402_1005Metric                                    23.5458    36.5988   90.0000  top
+D1        USBLC6-2SC6         SOT-23-6                                             10.0021    38.0340    0.0000  top
+D2        SS34                D_SMA                                                18.2118    10.1346  -90.0000  top
+D3        LED_PWR             LED_0603_1608Metric                                   7.6201    26.7462    0.0000  top
+D4        WS2812D-F5-12MA-C1  C4154875_LED-TH_4P-BD5_8-P1_27_WS2812D-F5-12MA-C1    48.1584    38.2728  -90.0000  top
+DC1       DC-005-2.5A-2.0     C319099_CONN-TH_DC-005-2_5A-2_0                       7.2305     5.2549    0.0000  top
+J1        Power/Analog        PinSocket_1x15_P2.54mm_Vertical_Arduino_6+8          27.9400     2.5400   90.0000  top
+J2        Digital/PWM         PinSocket_1x18_P2.54mm_Vertical_Arduino_8+10         18.7960    50.8000   90.0000  top
+J5        ICSP                PinHeader_2x03_P2.54mm_Vertical                      63.6524    30.4038    0.0000  top
+KEY1      RESET               C273519_KEY-SMD_4P-L6_0-W6_0-P4_50-LS10_0             6.8580    49.0728   90.0000  top
+KEY2      BTN_BUILTIN         C273519_KEY-SMD_4P-L6_0-W6_0-P4_50-LS10_0            48.1584    20.4724  -90.0000  top
+R1        5.1K                R_0402_1005Metric                                     8.5618    40.3606    0.0000  top
+R2        5.1K                R_0402_1005Metric                                     8.5598    35.7378    0.0000  top
+R3        1                   R_0603_1608Metric                                    15.3904    15.6210  180.0000  top
+R4        1                   R_0603_1608Metric                                    14.2626    25.3238  180.0000  top
+R5        1                   R_0603_1608Metric                                    22.4150    25.3238    0.0000  top
+R6        1                   R_0603_1608Metric                                     4.2164    14.5034  -90.0000  top
+R7        330                 R_0402_1005Metric                                    15.0648    46.1518    0.0000  top
+R8        75                  R_0603_1608Metric                                    27.8892    41.8592  180.0000  top
+R9        5.1K                R_0402_1005Metric                                    27.3050    40.4114    0.0000  top
+R10       5.1K                R_0402_1005Metric                                     4.4196    26.7462  180.0000  top
+U1        AVR64DU32-I/RXB     QFN-32-1EP_5x5mm_P0.5mm_EP3.1x3.1mm                  19.6542    37.6945    0.0000  top
+U2        XC8110AA01MR-G      C3235547_TSOT-25_L2_9-W1_6-P0_95-LS2_8-BR            11.4046    31.8894  180.0000  top
+U3        AMS1117-5.0         C6187_SOT-223_L6_5-W3_5-P2_30-LS7_0-BR               18.2740    21.7068  -90.0000  top
+U4        AMS1117-3.3         C6186_SOT-223-3_L6_5-W3_4-P2_30-LS7_0-BR              8.2150    21.9456    0.0000  top
+USB1      TYPE-C-31-M-12      C165948_USB-C_SMD-TYPE-C-31-M-12_1                    3.7276    38.0278  -90.0000  top
+## End

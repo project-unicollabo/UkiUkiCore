@@ -1,0 +1,32 @@
+### Footprint positions - created on 2026-10-31T01:42:38 ###
+### Printed by KiCad version 10.0.7
+## Unit = mm, Angle = deg.
+## Side : All
+# Ref     Val                  Package                                            PosX       PosY       Rot  Side
+C1        4.7μF                C_0603_1608Metric                                6.8326     4.6990  -90.0000  top
+C2        10μF                 C_0603_1608Metric                               11.6332     4.8898   90.0000  top
+C3        22μF                 C_0805_2012Metric                               11.8364    12.7000  -90.0000  top
+C4        10μF                 C_0603_1608Metric                               17.5260    12.6876  -90.0000  top
+C6        0.1μF                C_0402_1005Metric                               24.9682    10.3632   90.0000  top
+C7        0.1μF                C_0402_1005Metric                               22.5324    13.3604  180.0000  top
+C8        0.47μF               C_0603_1608Metric                               15.5702     9.0300   90.0000  top
+C9        0.1μF                C_0402_1005Metric                               20.1690    11.6350  180.0000  top
+C10       0.1μF                C_0402_1005Metric                               24.0792     7.0104   90.0000  top
+D1        USBLC6-2SC6          SOT-23-6                                         8.8193     9.0780    0.0000  top
+D2        B5819W_SL            C8598_SOD-123_L2_7-W1_6-LS3_7-RD-1               8.2804    13.1572  180.0000  top
+D3        LED_PWR              LED_0603_1608Metric                             14.0208     4.1402  180.0000  top
+D4        XL-5050RGBC-WS2812B  C2843785_LED-SMD_4P-L5_0-W5_0-BL_XL-5050RGBC    28.9922     8.8914  -90.0000  top
+KEY1      RESET                C720477_SW-SMD_L3_9-W3_0-P4_45                  29.1592    13.2080    0.0000  top
+KEY2      BTN_BUILTIN          C720477_SW-SMD_L3_9-W3_0-P4_45                  29.1592     4.5720  180.0000  top
+R1        5.1K                 R_0402_1005Metric                                7.6434    11.3792    0.0000  top
+R2        5.1K                 R_0402_1005Metric                                7.0338     6.7818    0.0000  top
+R4        1                    R_0603_1608Metric                               19.8374    13.4366    0.0000  top
+R7        330                  R_0402_1005Metric                               22.5552    12.3190  180.0000  top
+R8        330                  R_0402_1005Metric                               25.2476    13.6398  180.0000  top
+R9        5.1K                 R_0402_1005Metric                               25.4000     4.1402  180.0000  top
+R10       7.5K                 R_0402_1005Metric                               13.4600     5.4610  180.0000  top
+U1        AVR64DU32T-I/RXB     QFN-32-1EP_5x5mm_P0.5mm_EP3.1x3.1mm             20.2144     7.8749    0.0000  top
+U2        CH213K               C5456874_SOT-23-3_L2_9-W1_6-P1_90-LS2_8-BR       9.2456     5.2370  -90.0000  top
+U3        SPX3819M5-L-5-0/TR   C13417_SOT-23-5_L3_0-W1_7-P0_95-LS2_8-BL        14.7644    12.6848  -90.0000  top
+USB1      CX90M-16P            C2889324_USB-C-SMD_CX90M-16P                     3.2154     8.8900  -90.0000  top
+## End

@@ -1,0 +1,28 @@
+Drill report for UkiUkiduino_Schematics.kicad_pcb
+Created on 2026-10-31T02:21:25
+
+Copper Layer Stackup:
+    =============================================================
+    L1 :  F.Cu                      front
+    L2 :  B.Cu                      back
+
+
+Drill file 'UkiUkiduino_Schematics-PTH-drl.gbr' contains
+    plated through holes:
+    =============================================================
+    T1  0.300mm  0.0118"  (333 holes))
+    T2  0.500mm  0.0197"  (14 holes))
+    T3  0.750mm  0.0295"  (2 holes))
+    T4  0.800mm  0.0315"  (8 holes)  (with 4 slots)
+    T5  1.000mm  0.0394"  (39 holes))
+    T6  1.200mm  0.0472"  (3 holes)  (with 3 slots)
+
+    Total plated holes count 399
+
+
+Drill file 'UkiUkiduino_Schematics-NPTH-drl.gbr' contains
+    unplated through holes:
+    =============================================================
+    T1  3.200mm  0.1260"  (4 holes))
+
+    Total unplated holes count 4

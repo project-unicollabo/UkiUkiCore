@@ -1,0 +1,6 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "AVR64DU32-I-PT") (type "KiCad") (uri "${KIPRJMOD}/libs/UltraLibrarian/symbol/AVR64DU32-I-PT.kicad_sym") (options "") (descr ""))
+	(lib (name "AVR64DU32-I-RXB") (type "KiCad") (uri "${KIPRJMOD}/libs/UltraLibrarian/symbol/AVR64DU32-I-RXB.kicad_sym") (options "") (descr ""))
+	(lib (name "lcsc_imported") (type "KiCad") (uri "${KIPRJMOD}/libs/lcsc/symbols/lcsc_imported.kicad_sym") (options "") (descr ""))
+)
