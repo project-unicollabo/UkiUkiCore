@@ -43,6 +43,21 @@ Pro Micro 互換機の製品名が **UkiUkiduino Pony** に決まり、基板 Re
 - ブートローダー `usbcdcboot_ukiukiduinopony.hex` を再ビルド（LED データ線 PA0、新しい製品名）。
   `usbcdcboot_ukiukiduino.hex` は変更ありません。
 
+### アナログ
+
+WazamonoCore の修正・追加を取り込みました（4fa7dcb8 / cd6915fc / 6b56eec6〜90988267）。
+
+- **`init_ADC0()` が `CLKCTRL.MCLKTIMEBASE` を設定するようになりました**（`wiring.c`）。
+  AVR DU の ADC は起動・内部基準電圧のセトリング（40 µs）・温度センサの待ち時間をこのレジスタ
+  （1 µs あたりの CLK_PER サイクル数）で計時します（DS40002548B 32.3.2 手順 1、32.3.3.5）。
+  DA/DB/DD には無いレジスタで、これまでリセット値 0 のままだったため、内部基準電圧
+  （`INTERNAL1V024`〜`INTERNAL4V096`）での変換が 0 または 1023 になっていました。
+  既定の `analogReference(VDD)` での `analogRead()` には影響ありません。
+- **16 MHz / 12 MHz で ADC クロックが規格上限を超えていたのを修正**（`wiring.c`）。
+  プリスケーラが 16 MHz → DIV4（4 MHz）、12 MHz → DIV4（3 MHz）になっていました。
+  DU の CLK_ADC 上限 2 MHz（DS40002548B Table 35-23）に合わせ、16 MHz → DIV8、12 MHz → DIV6 とし、
+  Clock メニューの 24 / 20 / 16 / 12 MHz すべてで 2 MHz になります。
+
 ### ドキュメント・サンプル
 
 - `megaavr/extras/UkiUkiduinoPony.md` を基板 Rev.0.2 の内容（ピン表・電源・LED / ボタン・主要部品）に更新。
