@@ -274,5 +274,5 @@ UkiUkiCore は [WazamonoCore](https://github.com/ws-asahi/WazamonoCore)（© Wor
 
 ### ハードウェア設計データ
 
-基板の設計データ(KiCad の回路図・基板レイアウト、ガーバー、部品表)は [hardware/](hardware/) にあり、**CERN-OHL-P v2** で公開しています(© Unicollabo)。ライセンス全文は [hardware/LICENSE](hardware/LICENSE)、対象外のファイルなどの詳細は [hardware/README.md](hardware/README.md) を参照してください。
+基板の設計データ(KiCad の回路図・基板レイアウト、部品表)は [hardware/](hardware/) にあり、**CERN-OHL-P v2** で公開しています(© Unicollabo)。ライセンス全文は [hardware/LICENSE](hardware/LICENSE)、対象外のファイルなどの詳細は [hardware/README.md](hardware/README.md) を参照してください。
 

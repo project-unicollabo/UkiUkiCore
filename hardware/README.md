@@ -11,8 +11,6 @@ UkiUkiduino シリーズの基板設計データ(KiCad プロジェクト)です
 各ディレクトリには次のファイルが入っています。
 
 - `*.kicad_pro` / `*.kicad_sch` / `*.kicad_pcb` - KiCad 10 のプロジェクト・回路図・基板レイアウト
-- `*.net` - ネットリスト
-- `Gerber/` - 製造用ガーバー・ドリルデータ・部品座標
 - `*_BOM_JLCPCB.csv` - 部品表(JLCPCB 形式)
 - `*ピン構成.csv` - MCU ピンと Arduino ピン番号の対応表
 - `libs/` - プロジェクトローカルの部品ライブラリ
