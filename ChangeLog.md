@@ -1,8 +1,54 @@
 # ChangeLog
 
 UkiUkiCore の変更履歴です。UkiUkiCore は VTuber「浮々ゆにこ」ファングッズ向け Arduino 互換機
-UkiUkiduino（Uno R3 互換）/ UkiUkimicro（Pro Micro 互換）のための Arduino コアで、
+UkiUkiduino（Uno R3 互換）/ UkiUkiduino Pony（Pro Micro 互換）のための Arduino コアで、
 [WazamonoCore](https://github.com/ws-asahi/WazamonoCore)（DxCore 1.6 系）から派生しています。
+
+---
+
+## 未リリース — UkiUkiduino Pony（旧 UkiUkimicro）への改名と基板 Rev.0.2 対応
+
+Pro Micro 互換機の製品名が **UkiUkiduino Pony** に決まり、基板 Rev.0.2 でオンボード LED・
+ボタンまわりのピン割り当てと電源構成が変わったため、variant・ブートローダー・ドキュメントを
+合わせて更新しました。ヘッダに出ているピン（D0〜D16、A0）の番号と機能は変わりません。
+
+### 破壊的変更
+
+- **Pro Micro 互換機の名称を「UkiUkimicro」から「UkiUkiduino Pony」に変更**。
+  互換エイリアスはありません。ボードメニューの選び直しと、ボード判定マクロを使っている
+  スケッチの書き換えが必要です。
+  - FQBN `ukiukimicro` → `ukiukiduinopony`
+  - `ARDUINO_AVR_UKIUKIMICRO` → `ARDUINO_AVR_UKIUKIDUINO_PONY`
+  - `UKIUKIMICRO_PINOUT` → `UKIUKIDUINO_PONY_PINOUT`
+  - `variants/UkiUkimicro/` → `variants/UkiUkiduinoPony/`、ドキュメント `extras/UkiUkiduinoPony.md`
+  - ブートローダー `usbcdcboot_ukiukimicro.hex` → `usbcdcboot_ukiukiduinopony.hex`
+  - USB 製品名 "UkiUkimicro" → "UkiUkiduino Pony"（ブートローダーは "UkiUkiduino Pony Bootloader"）。
+    VID:PID は変更なし（0x1209:0x000E / 0x000D、テスト用 PID）。
+- **UkiUkiduino Pony のピン割り当てを基板 Rev.0.2 に合わせて変更**（旧基板とは互換がありません）。
+  - `A1` / `A2` / `A3`（D19 / D20 / D21）: PF1 / PF2 / PF3 → **PF0 / PF1 / PF2**
+  - `BTN_BUILTIN`（D32）: PF0 → **PA1**（UkiUkiduino と同じ MCU ピン）
+  - フルカラー LED のデータ線: PF4 → **PA0**（UkiUkiduino と同じ MCU ピン）
+  - `LED_BUILTIN`（D17）の状態ピン: PF5 → **PF3**（基板上は未接続。`A20` としても参照可）
+  - イベント出力 EVOUTF（PF2）: A2 → **A3**
+  - **TX / RX LED を廃止**: `D30` / `D31`、`LED_BUILTIN_TX` / `LED_BUILTIN_RX` は無くなりました。
+    `TXLED0` / `TXLED1` / `RXLED0` / `RXLED1` / `TX_RX_LED_INIT` は何もしないマクロとして残ります。
+  - 欠番は D11〜D13 と D25〜D31。MCU の PF4 / PF5 は未接続（Dn 番号なし）。
+  - CustomLogic1（LUT3）の入力は A1 / A2 / A3、出力（D17）はヘッダに出ていません。
+
+### ボード
+
+- **UkiUkiduino Pony 基板 Rev.0.2**: MCU は VQFN パッケージ（AVR64DU32-I/RXB）。
+  Pro Micro の RAW にあたるピンが **VIN** になり、ショットキーダイオード + 5 V LDO
+  （SPX3819M5-L-5-0）経由で給電できます。VCC にあたるピンは +5V です。
+- ブートローダー `usbcdcboot_ukiukiduinopony.hex` を再ビルド（LED データ線 PA0、新しい製品名）。
+  `usbcdcboot_ukiukiduino.hex` は変更ありません。
+
+### ドキュメント・サンプル
+
+- `megaavr/extras/UkiUkiduinoPony.md` を基板 Rev.0.2 の内容（ピン表・電源・LED / ボタン・主要部品）に更新。
+- CustomLogic / EventSystem / AnalogComp のボード別ピン表に UkiUkiduino Pony を追加し、
+  サンプル（DualUnits、PinToPin）の注記を新しいピン割り当てに合わせて修正。
+- 回路図・基板データは `hardware/UkiUkiduinoPony/` にあります。
 
 ---
 
