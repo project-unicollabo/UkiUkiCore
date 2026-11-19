@@ -58,6 +58,14 @@ WazamonoCore の修正・追加を取り込みました（4fa7dcb8 / cd6915fc / 
   DU の CLK_ADC 上限 2 MHz（DS40002548B Table 35-23）に合わせ、16 MHz → DIV8、12 MHz → DIV6 とし、
   Clock メニューの 24 / 20 / 16 / 12 MHz すべてで 2 MHz になります。
 
+- **`vddRead()` を追加**（`wiring_analog.c`、`Arduino.h`）。ADC の VDD/10 チャネルを内部 2.048 V 基準で
+  1 回変換し、電源電圧を 10 mV 単位で返します（5.00 V → 500）。分圧 ±10 %・基準 ±4 % の目安値です。
+  ADC の設定は呼び出し前の状態に戻ります。変換中に呼ぶと 0 を返します。
+- **`tempCRead()` / `tempFRead()` を追加**。チップ内蔵温度センサを SIGROW の出荷時校正値で換算し、
+  0.1 度単位で返します（253 = 25.3 °C）。ダイ温度で、絶対精度は ±10 °C 程度です。
+  変換中に呼ぶと `INT16_MIN` を返します。詳細は `megaavr/extras/Ref_Analog.md`。
+  WazamonoCore での実測値を掲載しており、UkiUkiduino 実機での確認はこれからです。
+
 ### ドキュメント・サンプル
 
 - `megaavr/extras/UkiUkiduinoPony.md` を基板 Rev.0.2 の内容（ピン表・電源・LED / ボタン・主要部品）に更新。

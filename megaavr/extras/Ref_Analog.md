@@ -286,6 +286,54 @@ Returns either 8, 10 or 12, the current resolution set for analogRead. no part h
 ### uint8_t getAnalogSampleDuration()
 Returns the number of ADC clocks by which the minimum sample length has been extended.
 
+### (WazamonoCore / UkiUkiCore) uint16_t vddRead()
+Reads the supply voltage of the MCU through the ADC's internal VDD/10 channel (`ADC_VDDDIV10`, DS40002548B 32.4.12) and returns **VDD in units of 10 mV**: 5.00 V reads as 500, 3.30 V as 330, 5.50 V as 550.
+
+It is one 10-bit conversion against the internal 2.048 V reference. That makes one LSB 2 mV at the ADC input, i.e. 20 mV of VDD, and the result is simply doubled - so the value is always even and the step is 20 mV. No averaging is done; a sketch that wants a smoother figure can average several calls.
+
+```c++
+uint16_t vdd = vddRead();          // 500 on a 5 V board, 330 on a 3.3 V board
+Serial.print(vdd / 100); Serial.print('.');
+if (vdd % 100 < 10) Serial.print('0');
+Serial.print(vdd % 100); Serial.println(" V");
+
+bool is5V = vdd > 420;                    // 5 V vs 3.3 V board detection
+```
+
+What the call does, and why:
+* 2.048 V is used rather than 1.024 V because DS40002548B Table 35-22 (V<sub>ADCREF</sub>) only permits an ADC clock above 500 kHz with a reference of 1.8 V or more. With 2.048 V the ADC keeps the ~2 MHz clock the core configured, the prescaler is left untouched, and the call stays short. The finer 10 mV step 1.024 V would give is meaningless next to the ±10 % the divider is specified to.
+* Switching from the VDD reference to an internal one costs a 40 µs settling (Table 32-4; 20 µs between two internal references). The ADC inserts that settling itself at the start of the next conversion, timed in units of `CLKCTRL.MCLKTIMEBASE`, which the core sets in `init_ADC0()` (32.3.2 step 1) - with that register at its reset value the settling collapses and internal-reference conversions return 0 or 1023, which is what the first release of WazamonoCore did. `vddRead()` also checks the ADCBUSY bit in `ADC0.STATUS` before starting and after restoring the previous reference, the datasheet's documented way to see settling in progress; on the parts measured it never has to wait. The settling dominates the call: about 55 µs in total at 24 MHz, blocking.
+* The sample duration is forced to 15 for the conversion, because an internal reference needs SAMPDUR ≥ 4 µs × f<sub>CLK_ADC</sub> − 1.5 = 6.5 at 2 MHz (32.3.3.7) and a sketch may have shortened it with `analogSampleDuration()`.
+* Every ADC register the call touches (CTRLA, CTRLC, CTRLE, CTRLF, MUXPOS) is saved and restored, so the reference, sample duration, left-adjust and accumulation that `analogRead()` / `analogReadEnh()` had before the call are exactly what they see afterwards. If the ADC had been disabled with `ADCPowerOptions(ADC_DISABLE)` it is enabled only for the duration of the call.
+* Returns **0** if a conversion is already in progress (Free-Running mode, or a call from inside an ADC ISR). 0 cannot occur otherwise while the part is running.
+
+Accuracy: the VDD/10 divider is specified to ±10 % and the 2.048 V reference to ±4 % (DS40002548B Tables 35-22 and 35-17). Treat the result as a supply *monitor* - is the board on 5 V or 3.3 V, is a battery getting low, did the rail sag - rather than a calibrated meter. Where an absolute figure matters, measure the board once against a known supply and keep a correction factor in USERROW or EEPROM. The DU has no VDDIO2 pin, so `ADC_VDDIO2DIV10` listed in the Dx tables above does not apply to Wazamono / UkiUkiduino boards. The `VDDCOREDIV4` channel (MUXPOS 0x41) has read anywhere from 0 to full scale on the same board in consecutive conversions during testing, so it is not something to build on either.
+
+(Measurements below are from WazamonoCore, where this function originates; not yet repeated on a UkiUkiduino, which runs at VDD = 5 V.) Verified on Tachi (3.3 V and 5 V), Kunai (3.3 V and 5 V) and an AVR64DU32 Curiosity Nano at 5 V: 3.26-3.32 V and 4.96-5.18 V read back, i.e. within the divider tolerance. One Tachi prototype returned 0 on every ADC channel at 5 V while working at 3.3 V; a second unit of the same board did not, so that was a damaged part, not a core or design issue.
+
+If you need the raw channel for your own resolution or accumulation, `analogRead(ADC_VDDDIV10)` and `analogReadEnh(ADC_VDDDIV10, res)` remain available; set `analogReference(INTERNAL2V048)` (or `INTERNAL1V024` together with `analogClockSpeed(500)`) yourself first, and put them back afterwards.
+
+### (WazamonoCore / UkiUkiCore) int16_t tempCRead() / int16_t tempFRead()
+Reads the on-chip temperature sensor and returns the temperature in **tenths of a degree**, Celsius or Fahrenheit: 253 means 25.3 °C, 776 means 77.6 °F. No floating point is involved.
+
+```c++
+int16_t c = tempCRead();
+Serial.print(c / 10); Serial.print('.'); Serial.print(abs(c) % 10); Serial.println(" C");
+```
+
+The procedure is the one in DS40002548B 32.3.3.8: internal 2.048 V reference, `TEMPSENSE` channel, a sample duration of 32 µs (SAMPDUR 64 at the 2 MHz ADC clock the core uses), one 10-bit conversion, then the factory calibration from the signature row - `T[K] = (SIGROW.TEMPSENSE1 − raw) × SIGROW.TEMPSENSE0 / 1024`, a signed offset and an unsigned gain programmed per device (8.7.1.2). The datasheet typesets the formula as a fraction; the parentheses matter, and the version without them is about 30 K low. Every ADC register touched is saved and restored, exactly as `vddRead()` does, so `analogRead()` is unaffected. About 80 µs at 24 MHz, dominated by the 40 µs sensor/reference settling the ADC inserts itself. Returns `INT16_MIN` if a conversion is already in progress.
+
+What the number means: it is the temperature of the die, which sits a few degrees above the board when the part is busy, and the absolute accuracy is limited. Measured (WazamonoCore boards) in a 26 °C room with the boards idling on USB:
+
+| Board | VDD | Reads | Notes |
+|---|---|---|---|
+| Tachi (AVR64DU32) | 3.3 V | 30.0 °C | package surface 27.4 °C by IR thermometer |
+| Kunai (AVR32DU20) | 3.3 V | 25.9 °C | |
+| Curiosity Nano (AVR64DU32) | 5 V | 24.8 °C | |
+| Kunai (AVR32DU20), another unit | 5 V | 16.0 °C | |
+
+Two things drive that spread. The sensor's own characterisation band is wide (Figure 36-105). And the reading is unusually sensitive to the 2.048 V reference: with a gain of roughly 1.0-1.3 K per LSB and a raw result around 560 LSB, a 1 % shift in the reference moves the result by 6-7 K, and the reference does shift with VDD and between parts (Figures 36-83/36-84, a ±3 % scale). The factory calibration is taken under the datasheet's typical conditions, VDD = 3.0 V, so boards run at 5 V tend to read low. Treat the raw reading as good to roughly ±10 °C absolute; its *changes* - a rise under load, a hot enclosure - are far more trustworthy than its level. A sketch that needs the level should take one reading at a known temperature and store the difference in USERROW or EEPROM as an offset, which the datasheet itself suggests (32.3.3.8). The core deliberately applies no such correction, since it is per unit and per supply voltage. Good enough for "is the enclosure getting hot" or for compensating other measurements; not a thermometer for the room. A sketch that wants a steadier figure can average several calls.
+
 ### uint8_t ADCPowerOptions(options)
 *Planned for when the AVR EA-series is added. For compatibility, a much more limited version will be provided for the Dx-series parts*
 The PGA requires power when turned on. It is enabled by any call to `analogReadEnh()` or `analogReadDiff()` that specifies valid gain > 0; if it is not already on, this will slow down the reading. By default we turn it on so people can just off afterwards. There is also a "low latency" mode that, when enabled, keeps the ADC reference and related hardware running to prevent the delay (on order of tens of microseconds) before the next analog reading is taken. We use that by default, but it can be turned off with this function.
